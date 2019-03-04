@@ -22,8 +22,8 @@ object Dependencies {
   lazy val akkaHttp = Seq(
     "com.typesafe.akka" %% "akka-http" % V.akkaHttp,
     "com.typesafe.akka" %% "akka-stream" % V.akka,
+    "com.typesafe.akka" %% "akka-slf4j" % V.akka,
     "de.heikoseeberger" %% "akka-http-circe" % V.akkaHttpJson,
-    "com.typesafe.akka" %% "akka-http-testkit" % V.akkaHttp % Test,
   )
 
   lazy val json = Seq(
@@ -45,6 +45,7 @@ object Dependencies {
   lazy val db = Seq(
     "org.postgresql" % "postgresql" % V.postgresql,
     "org.flywaydb" % "flyway-core" % V.flyway,
+    "io.getquill" %% "quill-async-postgres" % "3.0.1"
   )
 
   lazy val allDeps: Seq[ModuleID] =

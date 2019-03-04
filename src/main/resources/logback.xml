@@ -8,6 +8,18 @@
         </encoder>
     </appender>
 
+    <logger name="io.netty" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="com.github" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <logger name="com.typesafe.sslconfig" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <root level="debug">
         <appender-ref ref="STDOUT" />
     </root>
