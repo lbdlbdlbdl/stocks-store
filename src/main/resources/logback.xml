@@ -12,6 +12,10 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
+    <logger name="akka.io" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <logger name="com.github" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
@@ -20,7 +24,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <root level="debug">
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 

@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import spray.revolver.RevolverPlugin.autoImport._
 
 object Settings {
   val common: Seq[Def.Setting[_]] = Seq(
@@ -10,6 +11,7 @@ object Settings {
       "-Ypartial-unification",
       "-language:higherKinds",
       "-language:implicitConversions",
-    )
+    ),
+    reColors := Seq("blue", "green", "magenta")
   )
 }
