@@ -8,9 +8,15 @@ object Settings {
     scalacOptions ++= Seq(
       "-target:jvm-1.8",
       "-explaintypes",
-      "-Ypartial-unification",
+      "-Xlint",
+      "-language:postfixOps",
       "-language:higherKinds",
       "-language:implicitConversions",
+      "-Ypartial-unification",
+      "-Ywarn-dead-code",
+      "-Ywarn-inaccessible",
+      "-Ybackend-parallelism",
+      "8",
     ),
     reColors := Seq("blue", "green", "magenta")
   )

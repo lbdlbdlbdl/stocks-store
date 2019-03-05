@@ -4,17 +4,17 @@ import java.nio.charset.StandardCharsets
 
 import akka.actor.ActorSystem
 import akka.event.Logging
+import akka.event.Logging.LogLevel
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
 import akka.http.scaladsl.server.directives.LogEntry
-import io.getquill.{Escape, PostgresAsyncContext, SnakeCase}
-import com.typesafe.config.ConfigFactory
 import akka.stream.{ActorMaterializer, Materializer}
-import io.getquill.context.async.{AsyncContext, TransactionalExecutionContext}
+import com.typesafe.config.ConfigFactory
+import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 final case class User(
     id: Option[Long], // поле генерируется базой при вставке
@@ -109,12 +109,12 @@ object Server {
       }
     }
 
-    def requestMethodAsInfo(req: HttpRequest) =
-      LogEntry(s"${req.method.name} - ${req.uri}", Logging.InfoLevel)
+    def requestMethodAsInfo(logLevel: LogLevel)(req: HttpRequest) =
+      LogEntry(s"${req.method.name} - ${req.uri}", logLevel)
 
     val withLogging = {
       import akka.http.scaladsl.server.Directives.logRequest
-      logRequest(requestMethodAsInfo _)
+      logRequest(requestMethodAsInfo(Logging.InfoLevel) _)
     }
 
     val helloRoutes = {
@@ -128,8 +128,8 @@ object Server {
     }
 
     val userRoutes = {
-      import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
       import akka.http.scaladsl.server.Directives._
+      import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
       import io.circe.generic.auto._
 
       pathPrefix("user") {
