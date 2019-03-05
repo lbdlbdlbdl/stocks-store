@@ -1,7 +1,6 @@
 import sbt._
 
 object V {
-  val scalatest = "3.0.5"
   val akka = "2.5.+"
   val akkaHttp = "10.1.+"
   val circe = "0.11.+"
@@ -14,10 +13,6 @@ object V {
 }
 
 object Dependencies {
-
-  lazy val scalatest = Seq(
-    "org.scalatest" %% "scalatest" % V.scalatest % Test,
-  )
 
   lazy val akkaHttp = Seq(
     "com.typesafe.akka" %% "akka-http" % V.akkaHttp,
