@@ -46,26 +46,26 @@ object Server {
     flyway.migrate()
   }
 
-  class Dao(context: PostgresAsyncContext[Escape]) {
+  class Dao(context: PostgresAsyncContext[Escape])(
+      implicit ec: ExecutionContext) {
     import context._
 
     // поищем что-нибудь в БД
-    def findUserByLogin(login: String)(
-        implicit ec: ExecutionContext): Future[Option[User]] = {
+    def findUserByLogin(login: String): Future[Option[User]] = {
       run(quote {
         query[User].filter(_.login == lift(login)).take(1)
       }).map(_.headOption)
     }
 
     // списочек логинов
-    def listOfLogins(implicit ec: ExecutionContext): Future[List[String]] = {
+    def listOfLogins(): Future[List[String]] = {
       run(quote {
         query[User].map(_.login)
       })
     }
 
     // или добавим что-то новое
-    def addUser(user: User)(implicit ec: ExecutionContext): Future[User] = {
+    def addUser(user: User): Future[User] = {
       run(quote {
         query[User].insert(lift(user)).returning(_.id)
       }).map(newId => user.copy(id = newId))
@@ -109,12 +109,12 @@ object Server {
       }
     }
 
-    def requestMethodAsInfo(logLevel: LogLevel)(req: HttpRequest) =
+    def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
       LogEntry(s"${req.method.name} - ${req.uri}", logLevel)
 
     val withLogging = {
       import akka.http.scaladsl.server.Directives.logRequest
-      logRequest(requestMethodAsInfo(Logging.InfoLevel) _)
+      logRequest(requestMethodAs(Logging.InfoLevel) _)
     }
 
     val helloRoutes = {
@@ -141,7 +141,7 @@ object Server {
               complete(StatusCodes.NotFound, s"User $login not found")
           }
         } ~ pathEndOrSingleSlash {
-          onSuccess(dao.listOfLogins) { logins =>
+          onSuccess(dao.listOfLogins()) { logins =>
             complete(logins)
           }
         }

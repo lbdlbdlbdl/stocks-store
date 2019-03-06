@@ -1,15 +1,16 @@
 import sbt._
 
 object V {
-  val akka = "2.5.+"
-  val akkaHttp = "10.1.+"
+  val akka = "2.5.19"
+  val akkaHttp = "10.1.7"
   val circe = "0.11.+"
   val akkaHttpJson = "1.24.+"
-  val scalaLogging = "3.9.+"
+  val scalaLogging = "3.9.0"
   val logback = "1.2.+"
   val postgresql = "42.2.5.jre7"
   val flyway = "6.0.0-beta"
   val jwt = "1.1.0"
+  val quill = "3.0.1"
 }
 
 object Dependencies {
@@ -40,7 +41,7 @@ object Dependencies {
   lazy val db = Seq(
     "org.postgresql" % "postgresql" % V.postgresql,
     "org.flywaydb" % "flyway-core" % V.flyway,
-    "io.getquill" %% "quill-async-postgres" % "3.0.1"
+    "io.getquill" %% "quill-async-postgres" % V.quill,
   )
 
   lazy val allDeps: Seq[ModuleID] =

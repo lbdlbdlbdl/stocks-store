@@ -8,7 +8,6 @@ object Settings {
     scalacOptions ++= Seq(
       "-target:jvm-1.8",
       "-explaintypes",
-      "-Xlint",
       "-language:postfixOps",
       "-language:higherKinds",
       "-language:implicitConversions",
