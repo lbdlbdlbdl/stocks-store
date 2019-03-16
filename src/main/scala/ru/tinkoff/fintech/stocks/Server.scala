@@ -120,7 +120,7 @@ object Server {
     val helloRoutes = {
       import akka.http.scaladsl.server.Directives._
 
-      path("helo" / Segment) { s => //вот тут дерриктива матчится у нас
+      path("hello" / Segment) { s => //вот тут дерриктива матчится у нас
         complete(s"Hello, ${s.capitalize}!")
       } ~ pathEndOrSingleSlash {
         redirect("hello/world", StatusCodes.TemporaryRedirect)
