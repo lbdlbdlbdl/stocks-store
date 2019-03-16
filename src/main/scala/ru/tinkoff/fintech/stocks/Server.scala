@@ -24,7 +24,7 @@ final case class User(
 )
 
 object User {
-  def dummySalt = scala.util.Random.nextString(128)
+  def dummySalt = scala.util.Random.nextString(128) //кодировочка тута съезжает
   def dummyHash(str: String): String = {
     import java.security.MessageDigest
     val digest = MessageDigest.getInstance("SHA-256")
@@ -120,7 +120,7 @@ object Server {
     val helloRoutes = {
       import akka.http.scaladsl.server.Directives._
 
-      path("hello" / Segment) { s =>
+      path("helo" / Segment) { s => //вот тут дерриктива матчится у нас
         complete(s"Hello, ${s.capitalize}!")
       } ~ pathEndOrSingleSlash {
         redirect("hello/world", StatusCodes.TemporaryRedirect)
@@ -148,11 +148,27 @@ object Server {
       }
     }
 
+    val authRoutes ={
+      import akka.http.scaladsl.server.Directives._
+
+      pathPrefix("api"/"auth"){
+        path("signup"){
+          complete("Регистрация пользователя скоро будет создана -_-...")
+        }~
+          path("signin"){
+            complete("Нет пользователей - нет авторизации - нет проблем..")
+          }~
+          path("refresh"){
+            complete("Зайдите попозже ^_^")
+          }
+      }
+    }
+
     val allRoutes = {
       import akka.http.scaladsl.server.Directives._
 
       withLogging {
-        helloRoutes ~ userRoutes
+        helloRoutes ~ userRoutes ~ authRoutes
       }
     }
 
