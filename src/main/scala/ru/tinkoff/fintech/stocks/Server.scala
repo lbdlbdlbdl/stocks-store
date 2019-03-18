@@ -10,6 +10,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
+import ru.tinkoff.fintech.stocks.http.routes.UserRoutes
 
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
@@ -49,8 +50,6 @@ object Server {
     }
 
     val allRoutes = {
-      import akka.http.scaladsl.server.Directives._
-      import ru.tinkoff.fintech.stocks.http.routes._
 
       val ur = new UserRoutes()
 

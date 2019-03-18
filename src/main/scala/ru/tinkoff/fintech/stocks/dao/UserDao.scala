@@ -11,7 +11,7 @@ class UserDao(implicit val context: PostgresAsyncContext[Escape],
   import context._
 
   // поищем что-нибудь в БД
-  def findUserByLogin(login: String): Future[Option[User]] = {
+  def find(login: String): Future[Option[User]] = {
     run(quote {
       query[User].filter(_.login == lift(login)).take(1)
     }).map(_.headOption)
@@ -25,9 +25,10 @@ class UserDao(implicit val context: PostgresAsyncContext[Escape],
   }
 
   // или добавим что-то новое
-  def addUser(user: User): Future[User] = {
+  def add(user: User): Future[User] = {
     run(quote {
       query[User].insert(lift(user)).returning(_.id)
     }).map(newId => user.copy(id = newId))
   }
+
 }

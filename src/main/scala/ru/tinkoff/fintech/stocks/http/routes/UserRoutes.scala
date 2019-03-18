@@ -1,68 +1,63 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import pdi.jwt._
-//{Jwt, JwtAlgorithm, JwtHeader, JwtClaim, JwtOptions}
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import io.circe.generic.auto._
+import io.circe.syntax._
 import io.getquill.{Escape, PostgresAsyncContext}
+import ru.tinkoff.fintech.stocks.dao.UserDao
+import ru.tinkoff.fintech.stocks.http._
+import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
-
-import ru.tinkoff.fintech.stocks.dao.UserDao
+import scala.util.{Failure, Success}
 
 class UserRoutes(implicit val exctx: ExecutionContext,
-                 implicit val qctx: PostgresAsyncContext[Escape]) {
+                 implicit val qctx: PostgresAsyncContext[Escape]) extends JwtHelper with FailFastCirceSupport {
 
-  val dao = new UserDao()
-
-  val helloRoutes = {
-
-    import akka.http.scaladsl.server.Directives._
-
-    path("hello" / Segment) {
-      s => complete(s"Hello, ${s.capitalize}!") //вот тут дерриктива матчится у нас
-    } ~ pathEndOrSingleSlash {
-      redirect("hello/world", StatusCodes.TemporaryRedirect)
-    }
-  }
-
-  val userRoutes = {
-
-    import akka.http.scaladsl.server.Directives._
-    import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-    import io.circe.generic.auto._
-
-    pathPrefix("user") {
-      path(Segment) {
-        login =>
-          onSuccess(dao.findUserByLogin(login)) {
-            case Some(user) =>
-              complete(user) // wow, so secure! very safe
-            case None =>
-              complete(StatusCodes.NotFound, s"User $login not found")
-          }
-      } ~ pathEndOrSingleSlash {
-        onSuccess(dao.listOfLogins()) {
-          logins =>
-            complete(logins)
-        }
-      }
-    }
-  }
+  val userDao = new UserDao()
+  val userService = new UserService(userDao)
 
   val authRoutes = {
 
-    import akka.http.scaladsl.server.Directives._
-
     pathPrefix("api" / "auth") {
       path("signup") {
-        complete("Регистрация пользователя скоро будет создана -_-...")
-      } ~
-        path("signin") {
-          complete("Нет пользователей - нет авторизации - нет проблем..")
-        } ~
-        path("refresh") {
-          complete("Зайдите попозже ^_^")
+        post {
+          entity(as[Requests.UserRequest]) { user =>
+            val res = userService.createUser(user.login, user.password)
+            onComplete(res) {
+              case Success(value) => ???
+            }
+          }
         }
-    }
+      }
+    } ~
+      path("signin") {
+        post {
+          entity(as[Requests.UserRequest]) { user =>
+            val res = userService.authenticate(user.login, user.password)
+            onComplete(res) {
+              case Success(value: Either[ErrorMessage, Responses.Token]) =>
+                value match {
+                  case Right(token) => complete(StatusCodes.OK, token.asJson)
+                  case Left(error) => {
+                    val code = StatusCodes.Unauthorized
+                    complete(code, Error(code.intValue, error.message).asJson)
+                  }
+                }
+              case Failure(cause) =>
+                complete(StatusCodes.InternalServerError, s"Failed to authenticate bc $cause")
+            }
+          }
+        }
+      } ~
+      path("refresh") {
+        post {
+          entity(as[Requests.RefreshToken]) { refreshToken =>
+            ???
+          }
+        }
+      }
   }
 }
