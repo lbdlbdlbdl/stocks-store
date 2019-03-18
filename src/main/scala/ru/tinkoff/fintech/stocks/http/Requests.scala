@@ -1,6 +1,8 @@
 package ru.tinkoff.fintech.stocks.http
 
-object Responses {
+object Requests {
+
+  case class UserRequest(login: String, password: String)
 
   case class AuthData(login: String)
 
