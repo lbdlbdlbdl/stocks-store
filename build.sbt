@@ -7,3 +7,11 @@ lazy val stocksStore =
     )
     .settings(Settings.common)
     .settings(libraryDependencies ++= Dependencies.allDeps)
+
+libraryDependencies ++= Seq(
+  "com.pauldijou" %% "jwt-circe" % "2.1.0"
+)
+
+libraryDependencies ++= Seq(
+  "com.pauldijou" %% "jwt-core" % "2.1.0"
+)
