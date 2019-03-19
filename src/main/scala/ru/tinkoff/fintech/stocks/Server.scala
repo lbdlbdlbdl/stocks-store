@@ -54,7 +54,7 @@ object Server {
       val ur = new UserRoutes()
 
       withLogging {
-        ur.helloRoutes ~ ur.userRoutes ~ ur.authRoutes
+        ur.authRoutes
       }
     }
 

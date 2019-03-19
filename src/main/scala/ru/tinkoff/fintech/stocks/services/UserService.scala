@@ -13,6 +13,7 @@ class UserService(val userDao: UserDao)
     User(None, login, User.dummyHash(password), User.dummySalt)
 
   //Either?
+
   def createUser(login: String, password: String): Future[Either[ErrorMessage, Responses.Token]] = {
     for {
       maybeUser <- userDao.find(login)
@@ -22,6 +23,7 @@ class UserService(val userDao: UserDao)
       tokens = getTokens(user)
     } yield Right(Responses.Token(tokens.authToken, tokens.refreshToken))
   }
+
 
   /*
   def createUser(login: String, password: String): Future[Boolean] = {

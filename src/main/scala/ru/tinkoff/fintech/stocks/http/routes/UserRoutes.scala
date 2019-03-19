@@ -20,6 +20,7 @@ class UserRoutes(implicit val exctx: ExecutionContext,
   val userService = new UserService(userDao)
 
   val authRoutes = {
+    import io.circe.generic.auto._
 
     pathPrefix("api" / "auth") {
       path("signup") {
