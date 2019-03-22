@@ -30,7 +30,6 @@ class UserRoutes(implicit val exctx: ExecutionContext,
     pathPrefix("api" / "auth") {
       path("signup") {
         post {
-          log.info("begon signup")
           entity(as[Requests.UserRequest]) { user =>
             log.info(s"begin signup, user: $user")
             val tokens = userService.createUser(user.login, user.password)

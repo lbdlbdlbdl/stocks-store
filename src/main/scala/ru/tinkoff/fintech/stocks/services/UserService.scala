@@ -26,10 +26,10 @@ class UserService(val userDao: UserDao)
     for {
       maybeUser <- userDao.find(login)
       user <-
-        if (maybeUser.isDefined) throw new Exception("User already exists.")
+        if (maybeUser.isDefined) throw ValidationException("User already exists.")
         else userDao.add(newUser(login, password))
       tokens = getTokens(user)
-    } yield Responses.Token(tokens.authToken, tokens.refreshToken)
+    } yield Responses.Token(tokens.accessToken, tokens.refreshToken)
 
 
   /*
@@ -55,7 +55,7 @@ class UserService(val userDao: UserDao)
       else if (maybeUser.get.passwordHash == User.dummyHash(providedPassword)) maybeUser.get
       else throw UnauthorizedException("Username and password combination not found.")
       tokens = getTokens(correctUser)
-    } yield Responses.Token(tokens.authToken, tokens.refreshToken)
+    } yield Responses.Token(tokens.accessToken, tokens.refreshToken)
 
   /*
   def authenticate(login: String, providedPassword: String): Future[Responses.Token] =
