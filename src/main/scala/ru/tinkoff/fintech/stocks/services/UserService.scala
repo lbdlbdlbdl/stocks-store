@@ -51,9 +51,9 @@ class UserService(val userDao: UserDao)
     for {
       maybeUser <- userDao.find(login)
       correctUser =
-      if (maybeUser.isEmpty) throw NotFoundException("User not found.")
+      if (maybeUser.isEmpty) throw UnauthorizedException("User not found.")
       else if (maybeUser.get.passwordHash == User.dummyHash(providedPassword)) maybeUser.get
-      else throw NotFoundException("Username and password combination not found.")
+      else throw UnauthorizedException("Username and password combination not found.")
       tokens = getTokens(correctUser)
     } yield Responses.Token(tokens.authToken, tokens.refreshToken)
 

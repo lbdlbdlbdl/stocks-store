@@ -1,18 +1,24 @@
 package ru.tinkoff.fintech.stocks.http
 
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import StatusCodes._
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import Directives._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import ru.tinkoff.fintech.stocks.http.Exceptions._
 
-import Exceptions._
+object ExceptionHandlers extends FailFastCirceSupport {
 
-object ExceptionHandlers {
+  final case class ErrorBody(statusCode: String, message: String)
 
-  private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) =
-    extractUri { uri => complete(HttpResponse(statusCode, entity = exception.getMessage)) }
+  private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
+    import io.circe.generic.auto._
 
-  val CustomExceptionHandler: ExceptionHandler =
+    val body = ErrorBody(statusCode.toString(), exception.getMessage)
+    extractUri { uri => complete(statusCode, body) }
+  }
+
+  implicit def CustomExceptionHandler: ExceptionHandler =
     ExceptionHandler {
       case unEx: UnauthorizedException => completeFailedRequest[UnauthorizedException](Unauthorized, unEx)
       case vEx: ValidationException => completeFailedRequest[ValidationException](BadRequest, vEx)

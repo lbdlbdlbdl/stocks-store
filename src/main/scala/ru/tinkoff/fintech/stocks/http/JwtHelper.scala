@@ -11,7 +11,7 @@ import ru.tinkoff.fintech.stocks.http.Exceptions._
 /** *
   * Useful for gated routes and not only.
   */
-class JwtHelper {
+trait JwtHelper {
 
   val secretKey = ConfigFactory.load().getString("jwt.secretKey") // = "change-me-please"
   val accessExpiration = ConfigFactory.load().getInt("jwt.token.access.expirationInSeconds")
