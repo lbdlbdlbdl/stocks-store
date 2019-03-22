@@ -1,7 +1,9 @@
 # Тех. документация:
 
 [API](https://app.swaggerhub.com/apis/enp0s23/stocks/0.0.1#/)
+
 [Общие требования](https://drive.google.com/file/d/1aRMDVJx16FRiQO2mJ24xAA2_tduwbblp/view)
+
 [Требования для команды фронтэнда](Diplom_specs.md)
 
 
