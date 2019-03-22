@@ -2,6 +2,6 @@ package ru.tinkoff.fintech.stocks.http
 
 object Responses {
 
-  case class Token(authToken: String, refreshToken: String)
+  case class Token(accessToken: String, refreshToken: String)
 
 }
