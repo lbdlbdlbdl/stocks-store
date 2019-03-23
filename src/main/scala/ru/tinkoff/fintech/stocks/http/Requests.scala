@@ -8,3 +8,4 @@ object Requests {
 
   case class RefreshToken(refreshToken: String)
 }
+

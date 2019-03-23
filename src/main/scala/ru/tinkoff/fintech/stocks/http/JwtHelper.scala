@@ -42,31 +42,31 @@ class JwtHelper {
       case _ => throw UnauthorizedException()
     }
 
-//  def authenticated(userAction: Requests.AuthData => Route): Route = {
-//
-//    def extractToken(request: HttpMessage): Try[JwtClaim] = {
-//      val header = request.getHeader("Authorization") //Optinonal[]
-//      if (header.isPresent) {
-//        val encodedToken = header.get().value()
-//        if (isValidToken(encodedToken))
-//          JwtCirce.decode(encodedToken, secretKey, Seq(algorithm)) match {
-//            case Success(value) => Success(value)
-//            case Failure(exception) => throw exception
-//          }
-//        else throw new Exception("Invalid token.")
-//      }
-//      else throw new Exception("There's no token in Authorization header.")
-//    }
-//
-//    extractRequest { request =>
-//      val token = extractToken(request)
-//      token.fold(
-//        exception => complete(StatusCodes.Unauthorized, exception.getMessage),
-//        jwtClaim =>
-//          decode[Requests.AuthData](jwtClaim.content).fold(
-//            exception => complete(StatusCodes.Unauthorized, s"Malformed user data ${exception.getMessage}"), userAction)
-//      )
-//    }
-//  }
+  //  def authenticated(userAction: Requests.AuthData => Route): Route = {
+  //
+  //    def extractToken(request: HttpMessage): Try[JwtClaim] = {
+  //      val header = request.getHeader("Authorization") //Optinonal[]
+  //      if (header.isPresent) {
+  //        val encodedToken = header.get().value()
+  //        if (isValidToken(encodedToken))
+  //          JwtCirce.decode(encodedToken, secretKey, Seq(algorithm)) match {
+  //            case Success(value) => Success(value)
+  //            case Failure(exception) => throw exception
+  //          }
+  //        else throw new Exception("Invalid token.")
+  //      }
+  //      else throw new Exception("There's no token in Authorization header.")
+  //    }
+  //
+  //    extractRequest { request =>
+  //      val token = extractToken(request)
+  //      token.fold(
+  //        exception => complete(StatusCodes.Unauthorized, exception.getMessage),
+  //        jwtClaim =>
+  //          decode[Requests.AuthData](jwtClaim.content).fold(
+  //            exception => complete(StatusCodes.Unauthorized, s"Malformed user data ${exception.getMessage}"), userAction)
+  //      )
+  //    }
+  //  }
 }
 
