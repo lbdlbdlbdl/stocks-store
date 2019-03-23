@@ -8,8 +8,7 @@ final case class User(
                        passwordHash: String,
                        salt: String,
                        balance: Double,
-                       IconUrl: String,
-                       stocks: Seq[Long]
+                       IconUrl: Option[String]
                      )
 
 object User {

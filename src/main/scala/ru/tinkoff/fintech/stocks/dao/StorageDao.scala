@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
     1 пакет - 1 акция для User
 */
 
-class UserDao(implicit val context: PostgresAsyncContext[Escape],
+class StorageDao(implicit val context: PostgresAsyncContext[Escape],
               implicit val exctx: ExecutionContext) {
 
   import context._

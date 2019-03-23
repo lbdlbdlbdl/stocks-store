@@ -11,7 +11,7 @@ class UserService(val userDao: UserDao)
                  (implicit val exctx: ExecutionContext) extends JwtHelper {
 
   private def newUser(login: String, password: String): User =
-    User(None, login, User.dummyHash(password), User.dummySalt)
+    User(None, login, User.dummyHash(password), User.dummySalt,0,None)
 
   def refreshTokens(refreshToken: String): Future[Responses.Token] =
     Future { //наверное это плохо

@@ -5,7 +5,7 @@ import ru.tinkoff.fintech.stocks.db.models.Stock
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserStock(implicit val context: PostgresAsyncContext[Escape],
+class StockDao(implicit val context: PostgresAsyncContext[Escape],
               implicit val exctx: ExecutionContext) {
 
   import context._
