@@ -11,10 +11,10 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
   import context._
 
   //найдем описание акции
-  def findInStorage(id: Long): Future[Option[Stock]] = {
+  def InfoStock(id: Long): Future[Option[Stock]] = {
     run(quote {
       query[Stock].filter(_.id == lift(id)).take(1)
     }).map(_.headOption)
-  }
+}
 
 }

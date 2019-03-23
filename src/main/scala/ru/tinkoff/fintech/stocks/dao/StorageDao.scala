@@ -18,10 +18,10 @@ class StorageDao(implicit val context: PostgresAsyncContext[Escape],
   import context._
 
   //найдем пакет акции
-  def findInStorage(id: Long): Future[Option[Storage]] = {
+  def findById(id: Long): Future[List[Storage]] = {
     run(quote {
-      query[Storage].filter(_.id == lift(id)).take(1)
-    }).map(_.headOption)
+      query[Storage].filter(_.id == lift(id))
+    })
   }
 
 }
