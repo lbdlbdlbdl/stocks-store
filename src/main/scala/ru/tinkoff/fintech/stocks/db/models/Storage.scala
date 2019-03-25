@@ -1,11 +1,8 @@
 package ru.tinkoff.fintech.stocks.db.models
 
 final case class Storage(
-                          id: Long,
+                          login: String,
                           idStocks: Long,
                           count: Int
                         )
 
-object Storage {
-
-}

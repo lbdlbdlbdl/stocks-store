@@ -1,15 +1,24 @@
 package ru.tinkoff.fintech.stocks.db.models
 
-final case class Stock(
+final case class StockBd(
                         id: Long,
+                        code: String,
                         name: String,
+                        iconUrl: Option[String],
                         sale: Double,
-                        buy: Double,
-                        code: String
+                        buy: Double
                       )
 
-object Stock {
+final case class Stock(
+                        id: Long,
+                        code: String,
+                        name: String,
+                        iconUrl: Option[String],
+                        price: Double,
+                        priceDelta: Double,
+                        count: Int
+                      )
 
-}
+
 
 

@@ -7,8 +7,7 @@ final case class User(
                        login: String,
                        passwordHash: String,
                        salt: String,
-                       balance: Double,
-                       IconUrl: Option[String]
+                       balance: Double
                      )
 
 object User {

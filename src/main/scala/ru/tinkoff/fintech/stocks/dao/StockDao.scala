@@ -1,7 +1,7 @@
 package ru.tinkoff.fintech.stocks.dao
 
 import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.models.Stock
+import ru.tinkoff.fintech.stocks.db.models.StockBd
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -11,10 +11,12 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
   import context._
 
   //найдем описание акции
-  def InfoStock(id: Long): Future[Option[Stock]] = {
+  def infoStock(id: Long): Future[StockBd] = {
     run(quote {
-      query[Stock].filter(_.id == lift(id)).take(1)
-    }).map(_.headOption)
+      query[StockBd].filter(_.id == lift(id)).take(1)
+    })
+
+    }
 }
 
 }

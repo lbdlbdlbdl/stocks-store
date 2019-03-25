@@ -1,17 +1,39 @@
 package ru.tinkoff.fintech.stocks.services
 
-import ru.tinkoff.fintech.stocks.dao.UserDao
-import ru.tinkoff.fintech.stocks.db.models.User
+import ru.tinkoff.fintech.stocks.dao._
+import ru.tinkoff.fintech.stocks.db.models._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserService(val userDao: UserDao)
+class UserService(val userDao: UserDao, val storageDao: StorageDao, val stockDao: StockDao)
                  (implicit val exctx: ExecutionContext) extends JwtHelper {
 
   private def newUser(login: String, password: String): User =
-    User(None, login, User.dummyHash(password), User.dummySalt,200,None)
+    User(None, login, User.dummyHash(password), User.dummySalt, 200)
+
+  private def newStock(st: Future[StockBd], count: Storage): Future[Stock] =
+    st.map(s => Stock(s.id, s.code, s.name, s.iconUrl, s.buy, 0, count.count)) //изменить priceDelta
+
+
+  def userInfo(login: String): Future[Responses.UserInfo] = {
+    def stockList(packag: List[Storage], stocks: List[Future[Stock]] = Nil): Future[List[Stock]] = {
+      packag match {
+        case stock :: Nil => Future.sequence(stocks :+ newStock(stockDao.infoStock(stock.idStocks), stock))
+        case stock :: tail => stockList(tail, stocks :+ newStock(stockDao.infoStock(stock.idStocks), stock))
+        //case _=> дописать
+      }
+    }
+
+    for {
+      user <- userDao.find(login)
+      packag <- storageDao.findById(login)
+      stockList <- stockList(packag)
+
+    } yield Responses.UserInfo(login, user.get.balance, stockList)
+  }
+
 
   def refreshTokens(refreshToken: String): Future[Responses.Token] =
     Future { //наверное это плохо
