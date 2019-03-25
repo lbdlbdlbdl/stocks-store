@@ -25,7 +25,6 @@ class UserService(val userDao: UserDao, val storageDao: StorageDao, val stockDao
         //case _=> дописать
       }
     }
-
     for {
       user <- userDao.find(login)
       packag <- storageDao.findById(login)

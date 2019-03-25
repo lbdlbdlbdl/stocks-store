@@ -14,9 +14,6 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
   def infoStock(id: Long): Future[StockBd] = {
     run(quote {
       query[StockBd].filter(_.id == lift(id)).take(1)
-    })
-
+    }).map(_.head)
     }
-}
-
 }

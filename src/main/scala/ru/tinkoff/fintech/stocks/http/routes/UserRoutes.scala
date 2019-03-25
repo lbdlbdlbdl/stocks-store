@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.getquill.{Escape, PostgresAsyncContext}
 
-import ru.tinkoff.fintech.stocks.dao.UserDao
+import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
 
@@ -16,7 +16,9 @@ class UserRoutes(implicit val exctx: ExecutionContext,
                  implicit val qctx: PostgresAsyncContext[Escape]) extends FailFastCirceSupport {
 
   val userDao = new UserDao()
-  val userService = new UserService(userDao)
+  val storageDao = new StorageDao()
+  val stockDao = new StockDao()
+  val userService = new UserService(userDao,storageDao,stockDao)
 
   val authRoutes = {
     import io.circe.generic.auto._
