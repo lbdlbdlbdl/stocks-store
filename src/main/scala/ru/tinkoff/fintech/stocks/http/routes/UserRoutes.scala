@@ -13,12 +13,12 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 class UserRoutes(implicit val exctx: ExecutionContext,
-                 implicit val qctx: PostgresAsyncContext[Escape]) extends FailFastCirceSupport {
+                 implicit val qctx: PostgresAsyncContext[Escape]) extends FailFastCirceSupport with JwtHelper {
 
   val userDao = new UserDao()
   val storageDao = new StorageDao()
   val stockDao = new StockDao()
-  val userService = new UserService(userDao,storageDao,stockDao)
+  val userService = new UserService(userDao, storageDao, stockDao)
 
   val authRoutes = {
     import io.circe.generic.auto._
@@ -45,11 +45,13 @@ class UserRoutes(implicit val exctx: ExecutionContext,
           }
         } ~
         path("refresh") {
-          post {
-            entity(as[Requests.RefreshToken]) { refreshToken =>
-              val res = userService.refreshTokens(refreshToken.refreshToken)
-              onComplete(res) {
-                case Success(tokens) => complete(StatusCodes.OK, tokens)
+          authenticated { claim =>
+            post {
+              entity(as[Requests.RefreshToken]) { refreshToken =>
+                val res = userService.refreshTokens(refreshToken.refreshToken)
+                onComplete(res) {
+                  case Success(tokens) => complete(StatusCodes.OK, tokens)
+                }
               }
             }
           }

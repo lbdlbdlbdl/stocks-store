@@ -8,10 +8,12 @@ import io.circe.syntax._
 import pdi.jwt._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 
+import scala.concurrent.Future
+
 /** *
   * Useful for gated routes and not only.
   */
-class JwtHelper {
+trait JwtHelper {
 
   val secretKey = ConfigFactory.load().getString("jwt.secretKey") // = "change-me-please"
   val accessExpiration = ConfigFactory.load().getInt("jwt.token.access.expirationInSeconds")
@@ -23,6 +25,13 @@ class JwtHelper {
       .expiresIn(expiration)
       .issuedNow
 
+  def getClaim(token: String): JwtClaim =
+    if (isValidToken(token)) {
+      val claims = decodeToken(token).get
+      claims
+    } else throw UnauthorizedException("Invalid token.")
+
+
   def generateToken(authData: Requests.AuthData, expiration: Int): String =
     JwtCirce.encode(generateClaim(authData, expiration), secretKey, algorithm)
 
@@ -33,40 +42,40 @@ class JwtHelper {
 
   def decodeToken(token: String) = JwtCirce.decode(token, secretKey, Seq(algorithm))
 
-  def authenticated: Directive1[JwtClaim] =
-    optionalHeaderValueByName("Authorization") flatMap {
-      case Some(token) if isValidToken(token) =>
-        decodeToken(token)
-          .map(provide)
-          .getOrElse(throw ExpiredTokenException())
-      case _ => throw UnauthorizedException()
-    }
+    def authenticated: Directive1[JwtClaim] =
+      optionalHeaderValueByName("Authorization") flatMap {
+        case Some(token) if isValidToken(token) =>
+          decodeToken(token)
+            .map(provide)
+            .getOrElse(throw ExpiredTokenException())
+        case _ => throw UnauthorizedException()
+      }
 
-  //  def authenticated(userAction: Requests.AuthData => Route): Route = {
-  //
-  //    def extractToken(request: HttpMessage): Try[JwtClaim] = {
-  //      val header = request.getHeader("Authorization") //Optinonal[]
-  //      if (header.isPresent) {
-  //        val encodedToken = header.get().value()
-  //        if (isValidToken(encodedToken))
-  //          JwtCirce.decode(encodedToken, secretKey, Seq(algorithm)) match {
-  //            case Success(value) => Success(value)
-  //            case Failure(exception) => throw exception
-  //          }
-  //        else throw new Exception("Invalid token.")
-  //      }
-  //      else throw new Exception("There's no token in Authorization header.")
-  //    }
-  //
-  //    extractRequest { request =>
-  //      val token = extractToken(request)
-  //      token.fold(
-  //        exception => complete(StatusCodes.Unauthorized, exception.getMessage),
-  //        jwtClaim =>
-  //          decode[Requests.AuthData](jwtClaim.content).fold(
-  //            exception => complete(StatusCodes.Unauthorized, s"Malformed user data ${exception.getMessage}"), userAction)
-  //      )
-  //    }
-  //  }
-}
+    //  def authenticated(userAction: Requests.AuthData => Route): Route = {
+    //
+    //    def extractToken(request: HttpMessage): Try[JwtClaim] = {
+    //      val header = request.getHeader("Authorization") //Optinonal[]
+    //      if (header.isPresent) {
+    //        val encodedToken = header.get().value()
+    //        if (isValidToken(encodedToken))
+    //          JwtCirce.decode(encodedToken, secretKey, Seq(algorithm)) match {
+    //            case Success(value) => Success(value)
+    //            case Failure(exception) => throw exception
+    //          }
+    //        else throw new Exception("Invalid token.")
+    //      }
+    //      else throw new Exception("There's no token in Authorization header.")
+    //    }
+    //
+    //    extractRequest { request =>
+    //      val token = extractToken(request)
+    //      token.fold(
+    //        exception => complete(StatusCodes.Unauthorized, exception.getMessage),
+    //        jwtClaim =>
+    //          decode[Requests.AuthData](jwtClaim.content).fold(
+    //            exception => complete(StatusCodes.Unauthorized, s"Malformed user data ${exception.getMessage}"), userAction)
+    //      )
+    //    }
+    //  }
+  }
 

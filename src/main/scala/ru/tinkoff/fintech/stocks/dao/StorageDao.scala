@@ -1,7 +1,7 @@
 package ru.tinkoff.fintech.stocks.dao
 
 import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.models.Storage
+import ru.tinkoff.fintech.stocks.db.Storage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 */
 
 class StorageDao(implicit val context: PostgresAsyncContext[Escape],
-              implicit val exctx: ExecutionContext) {
+                 implicit val exctx: ExecutionContext) {
 
   import context._
 
@@ -22,6 +22,12 @@ class StorageDao(implicit val context: PostgresAsyncContext[Escape],
     run(quote {
       query[Storage].filter(_.login == lift(login))
     })
+  }
+
+  def add(storage: Storage): Future[Storage] = {
+    run(quote {
+      query[Storage].insert(lift(storage)).returning(_.id)
+    }).map(newId => storage.copy(id = newId))
   }
 
 }
