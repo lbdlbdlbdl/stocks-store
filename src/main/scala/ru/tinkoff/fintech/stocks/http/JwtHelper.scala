@@ -23,6 +23,12 @@ trait JwtHelper {
       .expiresIn(expiration)
       .issuedNow
 
+  def getClaim(token: String): JwtClaim =
+    if (isValidToken(token)) {
+      val claims = decodeToken(token).get
+      claims
+    } else throw UnauthorizedException("Invalid token.")
+
   def generateToken(authData: Requests.AuthData, expiration: Int): String =
     JwtCirce.encode(generateClaim(authData, expiration), secretKey, algorithm)
 

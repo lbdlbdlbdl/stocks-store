@@ -1,26 +1,54 @@
 package ru.tinkoff.fintech.stocks.services
 
 import ru.tinkoff.fintech.stocks.dao.UserDao
-import ru.tinkoff.fintech.stocks.db.models.User
+import ru.tinkoff.fintech.stocks.dao._
+import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage, User, _}
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserService(val userDao: UserDao)
+class UserService(val userDao: UserDao,
+                  val stocksPackageDao: StocksPackageDao,
+                  val stockDao: StockDao)
                  (implicit val exctx: ExecutionContext) extends JwtHelper {
 
-  private def newUser(login: String, password: String): User =
-    User(None, login, User.dummyHash(password), User.dummySalt)
+  private def newUser(login: String, password: String): User = {
+    val u = User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub
+    //transaction
+    //UPDATE BALANCE
+    stocksPackageDao.add(StocksPackage(None, u.id.get,1,4))
+    stocksPackageDao.add(StocksPackage(None, u.id.get,2,2))
+    u
+  }
 
-  def refreshTokens(refreshToken: String): Future[Responses.Token] =
-    Future { //наверное это плохо
-      if (isValidToken(refreshToken)) {
-        val claims = decodeToken(refreshToken).get
-        generateTokens(Requests.AuthData(claims.content))
-      } else throw UnauthorizedException("Invalid token.")
+  private def newStockResponse(st: Future[Stock], count: StocksPackage): Future[Responses.Stock] =
+    st.map(s => Responses.Stock(s.id, s.code, s.name, s.iconUrl, s.buyPrice, 0, count.count)) //изменить priceDelta
+
+  def accountInfo(login: String): Future[Responses.AccountInfo] = {
+
+    def stockList(stocksPackage: List[StocksPackage], accumStocks: List[Future[Responses.Stock]] = Nil): Future[List[Responses.Stock]] = {
+      stocksPackage match {
+        case stock :: Nil => Future.sequence(accumStocks :+ newStockResponse(stockDao.getStock(stock.stockId), stock))
+        case stock :: tail => stockList(tail, accumStocks :+ newStockResponse(stockDao.getStock(stock.stockId), stock))
+        case _ => Future(Nil)
+      }
     }
 
+    for {
+      maybeUser <- userDao.find(login)
+      user =
+      if (maybeUser.isEmpty) throw new Exception("User not found.")
+      else maybeUser.get
+      stocksPackage <- stocksPackageDao.find(user.id.get)
+      stockList <- stockList(stocksPackage)
+
+    } yield Responses.AccountInfo(login, user.balance, stockList)
+  }
+
+
+  def refreshTokens(refreshToken: String): Future[Responses.Token] =
+    Future(generateTokens(Requests.AuthData(getClaim(refreshToken).content)))
 
   def createUser(login: String, password: String): Future[Responses.Token] =
     for {

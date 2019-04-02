@@ -11,8 +11,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
-
-import ru.tinkoff.fintech.stocks.http.routes.UserRoutes
+import ru.tinkoff.fintech.stocks.http.routes.{AccountRoutes, UserRoutes}
 import ru.tinkoff.fintech.stocks.http._
 
 import scala.concurrent.ExecutionContext
@@ -27,7 +26,9 @@ object Server extends JwtHelper {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-    flyway.migrate()
+    flyway.clean()
+    flyway.baseline()
+//    flyway.migrate()
   }
 
   def main(args: Array[String]): Unit = {
@@ -44,6 +45,9 @@ object Server extends JwtHelper {
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()
 
+//    implicit val logger = Logging(system, getClass)
+
+
     def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
       LogEntry(s"${req.method.name} - ${req.uri}", logLevel)
 
@@ -57,15 +61,18 @@ object Server extends JwtHelper {
       import ru.tinkoff.fintech.stocks.http.ExceptionHandlers._
 
       val ur = new UserRoutes()
+      val ar = new AccountRoutes()
+
       withLogging {
         handleExceptions(CustomExceptionHandler) {
-          ur.authRoutes
+          ur.authRoutes ~ ar.accountRoutes
         }
       }
     }
-//    Http().bindAndHandle(allRoutes, interface = "localhost", port = 8080) andThen {
-        Http().bindAndHandle(allRoutes, "0.0.0.0", port) andThen {
-    case Failure(err) => err.printStackTrace(); system.terminate()
+    //    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+      case Failure(err) => err.printStackTrace(); system.terminate()
+
     }
   }
 }

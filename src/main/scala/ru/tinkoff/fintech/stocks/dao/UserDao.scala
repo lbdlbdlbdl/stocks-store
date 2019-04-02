@@ -1,7 +1,7 @@
 package ru.tinkoff.fintech.stocks.dao
 
 import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.models.User
+import ru.tinkoff.fintech.stocks.db.User
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,5 +30,11 @@ class UserDao(implicit val context: PostgresAsyncContext[Escape],
       query[User].insert(lift(user)).returning(_.id)
     }).map(newId => user.copy(id = newId))
   }
+
+//  def update(id: Long, minusBalance: Double): Future[User] = {
+//    run(quote {
+//      query[User].filter(_.id == lift(id)).update(u => u.balance -> (u.balance - lift(minusBalance)))
+//    })
+//  }
 
 }
