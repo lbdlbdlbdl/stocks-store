@@ -11,7 +11,3 @@ lazy val stocksStore =
 libraryDependencies ++= Seq(
   "com.pauldijou" %% "jwt-circe" % "2.1.0"
 )
-
-libraryDependencies ++= Seq(
-  "com.pauldijou" %% "jwt-core" % "2.1.0"
-)

@@ -1,5 +1,6 @@
 package ru.tinkoff.fintech.stocks.services
 
+import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.UserDao
 import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage, User, _}
@@ -11,15 +12,21 @@ import scala.concurrent.{ExecutionContext, Future}
 class UserService(val userDao: UserDao,
                   val stocksPackageDao: StocksPackageDao,
                   val stockDao: StockDao)
-                 (implicit val exctx: ExecutionContext) extends JwtHelper {
+                 (implicit val exctx: ExecutionContext,
+                  implicit val system: ActorSystem) extends JwtHelper {
 
-  private def newUser(login: String, password: String): User = {
+  import akka.event.Logging
+  val log = Logging.getLogger(system, this)
+
+  private def newUser(login: String, password: String): User =
     User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub
+
+  def addStocksForNewUser(user: User): Unit = {
     //transaction
     //UPDATE BALANCE
-//    stocksPackageDao.add(StocksPackage(None, u.id.get,1,4))
-//    stocksPackageDao.add(StocksPackage(None, u.id.get,2,2))
-//    u
+    log.info(s"begin add stocks for new user")
+    stocksPackageDao.add(StocksPackage(None, user.id.get, 1, 4))
+    stocksPackageDao.add(StocksPackage(None, user.id.get, 2, 2))
   }
 
   private def newStockResponse(st: Future[Stock], count: StocksPackage): Future[Responses.Stock] =
@@ -46,7 +53,6 @@ class UserService(val userDao: UserDao,
     } yield Responses.AccountInfo(login, user.balance, stockList)
   }
 
-
   def refreshTokens(refreshToken: String): Future[Responses.Token] =
     Future(generateTokens(Requests.AuthData(getClaim(refreshToken).content)))
 
@@ -56,6 +62,7 @@ class UserService(val userDao: UserDao,
       user <-
         if (maybeUser.isDefined) throw ValidationException("User already exists.")
         else userDao.add(newUser(login, password))
+      sp = addStocksForNewUser(user)
       tokens = getTokens(user)
     } yield Responses.Token(tokens.accessToken, tokens.refreshToken)
 

@@ -18,6 +18,7 @@ create table "Stock" (
 "buyPrice" float not null /*цена покупки*/
 );
 
+
 create table "StocksPackage" (
 "id" serial primary key,
 "userId" integer not null ,
