@@ -30,12 +30,6 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(newId => stocksPack.copy(id = newId))
   }
 
-  def add(user: User): Future[User] = {
-    run(quote {
-      query[User].insert(lift(user)).returning(_.id)
-    }).map(newId => user.copy(id = newId))
-  }
-
 //  def add(stocksPack: StocksPackage): Future[StocksPackage] = {
 //    run(quote {
 //      query[StocksPackage].insert(lift(stocksPack)).returning(sp => (sp.userId, sp.stockId))

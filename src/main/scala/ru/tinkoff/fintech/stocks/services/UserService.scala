@@ -14,12 +14,12 @@ class UserService(val userDao: UserDao,
                  (implicit val exctx: ExecutionContext) extends JwtHelper {
 
   private def newUser(login: String, password: String): User = {
-    val u = User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub
+    User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub
     //transaction
     //UPDATE BALANCE
-    stocksPackageDao.add(StocksPackage(None, u.id.get,1,4))
-    stocksPackageDao.add(StocksPackage(None, u.id.get,2,2))
-    u
+//    stocksPackageDao.add(StocksPackage(None, u.id.get,1,4))
+//    stocksPackageDao.add(StocksPackage(None, u.id.get,2,2))
+//    u
   }
 
   private def newStockResponse(st: Future[Stock], count: StocksPackage): Future[Responses.Stock] =
