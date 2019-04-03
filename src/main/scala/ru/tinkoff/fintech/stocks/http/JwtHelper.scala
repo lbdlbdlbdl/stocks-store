@@ -21,8 +21,8 @@ trait JwtHelper {
 
   private def generateClaim(authData: Requests.AuthData, expiration: Int): JwtClaim =
     JwtClaim(authData.asJson.toString())
-//      .expiresIn(expiration)
-      .expiresIn(20)
+      .expiresIn(expiration)
+//      .expiresIn(20)
       .issuedNow
 
   def getClaim(token: String): JwtClaim =
@@ -44,44 +44,11 @@ trait JwtHelper {
   def authenticated: Directive1[JwtClaim] =
     optionalHeaderValueByName("Authorization") flatMap {
       case Some(token) =>
-        if (isValidToken(token)) {
           decodeToken(token)
             .map(provide)
             .getOrElse(throw ExpiredTokenException())
-        } else {throw ExpiredTokenException()}
-      //        if !isValidToken(token)
-      //          decodeToken(token)
-      //            .map(provide)
-      //            .getOrElse(throw ExpiredTokenException())
-
       case _ => throw UnauthorizedException() //если нет в header'e ничего
     }
 
-  //  def authenticated(userAction: Requests.AuthData => Route): Route = {
-  //
-  //    def extractToken(request: HttpMessage): Try[JwtClaim] = {
-  //      val header = request.getHeader("Authorization") //Optinonal[]
-  //      if (header.isPresent) {
-  //        val encodedToken = header.get().value()
-  //        if (isValidToken(encodedToken))
-  //          JwtCirce.decode(encodedToken, secretKey, Seq(algorithm)) match {
-  //            case Success(value) => Success(value)
-  //            case Failure(exception) => throw exception
-  //          }
-  //        else throw new Exception("Invalid token.")
-  //      }
-  //      else throw new Exception("There's no token in Authorization header.")
-  //    }
-  //
-  //    extractRequest { request =>
-  //      val token = extractToken(request)
-  //      token.fold(
-  //        exception => complete(StatusCodes.Unauthorized, exception.getMessage),
-  //        jwtClaim =>
-  //          decode[Requests.AuthData](jwtClaim.content).fold(
-  //            exception => complete(StatusCodes.Unauthorized, s"Malformed user data ${exception.getMessage}"), userAction)
-  //      )
-  //    }
-  //  }
 }
 
