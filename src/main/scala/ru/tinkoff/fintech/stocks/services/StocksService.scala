@@ -10,6 +10,7 @@ class StocksService(val stocksPackageDao: StocksPackageDao,
                     val stockDao: StockDao)
                    (implicit val exctx: ExecutionContext,
                    implicit val system: ActorSystem) extends JwtHelper {
+
   import akka.event.Logging
   val log = Logging.getLogger(system, this)
 

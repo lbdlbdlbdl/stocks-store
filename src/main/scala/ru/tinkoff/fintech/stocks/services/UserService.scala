@@ -53,8 +53,10 @@ class UserService(val userDao: UserDao,
     } yield Responses.AccountInfo(login, user.balance, stockList)
   }
 
-  def refreshTokens(refreshToken: String): Future[Responses.Token] =
-    Future(generateTokens(Requests.AuthData(getClaim(refreshToken).content)))
+  def refreshTokens(refreshToken: String): Future[Responses.Token] = {
+    if (!isValidToken(refreshToken)) throw UnauthorizedException("Refresh token is invalid, please log in.")
+    Future(generateTokens(Requests.AuthData(getLoginFromClaim(getClaim(refreshToken)))))
+  }
 
   def createUser(login: String, password: String): Future[Responses.Token] =
     for {

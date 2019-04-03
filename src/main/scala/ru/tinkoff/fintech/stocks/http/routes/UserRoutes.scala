@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 class UserRoutes(implicit val exctx: ExecutionContext,
                  implicit val qctx: PostgresAsyncContext[Escape],
-                 implicit val system: ActorSystem) extends    FailFastCirceSupport with JwtHelper {
+                 implicit val system: ActorSystem) extends FailFastCirceSupport with JwtHelper {
 
   import akka.event.Logging
   val log = Logging.getLogger(system, this)
@@ -36,7 +36,7 @@ class UserRoutes(implicit val exctx: ExecutionContext,
           entity(as[Requests.UserRequest]) { user =>
             log.info(s"begin signup, user: $user")
             val tokens = userService.createUser(user.login, user.password)
-            onSuccess(tokens) { tokens => complete(StatusCodes.OK, tokens)}
+            onSuccess(tokens) { tokens => complete(StatusCodes.OK, tokens) }
           }
         }
       } ~
@@ -45,18 +45,16 @@ class UserRoutes(implicit val exctx: ExecutionContext,
             entity(as[Requests.UserRequest]) { user =>
               log.info(s"begin signup, user: $user")
               val tokens = userService.authenticate(user.login, user.password)
-              onSuccess(tokens) {tokens => complete(StatusCodes.OK, tokens)}
+              onSuccess(tokens) { tokens => complete(StatusCodes.OK, tokens) }
             }
           }
         } ~
-        authenticated { claim =>
-          path("refresh") {
-            post {
-              entity(as[Requests.RefreshToken]) { refreshToken =>
-                val res = userService.refreshTokens(refreshToken.refreshToken)
-                onComplete(res) {
-                  case Success(tokens) => complete(StatusCodes.OK, tokens)
-                }
+        path("refresh") {
+          post {
+            entity(as[Requests.RefreshToken]) { refreshToken =>
+              val res = userService.refreshTokens(refreshToken.refreshToken)
+              onComplete(res) {
+                case Success(tokens) => complete(StatusCodes.OK, tokens)
               }
             }
           }

@@ -7,6 +7,7 @@ import com.typesafe.config.ConfigFactory
 import io.circe.generic.auto._
 import io.circe.syntax._
 import pdi.jwt._
+import io.circe._, io.circe.parser._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 
 /** *
@@ -22,7 +23,6 @@ trait JwtHelper {
   private def generateClaim(authData: Requests.AuthData, expiration: Int): JwtClaim =
     JwtClaim(authData.asJson.toString())
       .expiresIn(expiration)
-//      .expiresIn(20)
       .issuedNow
 
   def getClaim(token: String): JwtClaim =
@@ -30,6 +30,15 @@ trait JwtHelper {
       val claims = decodeToken(token).get
       claims
     } else throw UnauthorizedException("Invalid token.")
+
+  def getLoginFromClaim(claim: JwtClaim): String ={
+    val loginDoc: Json = parse(claim.content).getOrElse(Json.Null)
+    val cursor: HCursor = loginDoc.hcursor
+    val login = cursor.downField("login").as[String] match {
+      case Right(value) => value
+    }
+    login
+  }
 
   def generateToken(authData: Requests.AuthData, expiration: Int): String =
     JwtCirce.encode(generateClaim(authData, expiration), secretKey, algorithm)

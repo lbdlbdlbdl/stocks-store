@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.getquill.{Escape, PostgresAsyncContext}
+
 import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
@@ -35,14 +36,8 @@ class AccountRoutes(implicit val exctx: ExecutionContext,
       path("info") {
         authenticated { claim =>
           get {
-            val loginDoc: Json = parse(claim.content).getOrElse(Json.Null)
-            val cursor: HCursor = loginDoc.hcursor
-            val login = cursor.downField("login").as[String] match {
-              case Right(value) => value
-            }
-            logger.warning("sfsfsf")
+            val login = getLoginFromClaim(claim)
             logger.info(s"login == $login")
-            //            actorSystem.log.info("login==")
             val res = userService.accountInfo(login)
             onComplete(res) {
               case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
