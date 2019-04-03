@@ -16,10 +16,12 @@ import scala.util.{Failure, Success}
 
 class UserRoutes(implicit val exctx: ExecutionContext,
                  implicit val qctx: PostgresAsyncContext[Escape],
-                 implicit val system: ActorSystem) extends FailFastCirceSupport with JwtHelper {
+                 implicit val system: ActorSystem) extends    FailFastCirceSupport with JwtHelper {
 
   import akka.event.Logging
   val log = Logging.getLogger(system, this)
+
+
   val userDao = new UserDao()
   val storageDao = new StocksPackageDao()
   val stockDao = new StockDao()
