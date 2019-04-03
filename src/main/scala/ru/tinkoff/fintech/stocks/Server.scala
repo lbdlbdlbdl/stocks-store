@@ -26,9 +26,9 @@ object Server extends JwtHelper {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-    flyway.clean()
-    flyway.baseline()
-//    flyway.migrate()
+//    flyway.clean()
+//    flyway.baseline()
+    flyway.migrate()
   }
 
   def main(args: Array[String]): Unit = {
