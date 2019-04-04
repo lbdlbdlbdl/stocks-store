@@ -7,4 +7,6 @@ object Requests {
   case class AuthData(login: String)
 
   case class RefreshToken(refreshToken: String)
+
+  case class TransactionBuy(stockId: String, amount: String)
 }
