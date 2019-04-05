@@ -11,7 +11,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
-import ru.tinkoff.fintech.stocks.http.routes.{AccountRoutes, UserRoutes}
+import ru.tinkoff.fintech.stocks.http.routes.{AccountRoutes, StockRoutes, UserRoutes}
 import ru.tinkoff.fintech.stocks.http._
 
 import scala.concurrent.ExecutionContext
@@ -62,10 +62,11 @@ object Server extends JwtHelper {
 
       val ur = new UserRoutes()
       val ar = new AccountRoutes()
+      val sr = new StockRoutes()
 
       withLogging {
         handleExceptions(CustomExceptionHandler) {
-          ur.authRoutes ~ ar.accountRoutes
+          ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
         }
       }
     }

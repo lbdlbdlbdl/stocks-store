@@ -16,16 +16,19 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
       query[Stock].filter(_.id == lift(id)).take(1)
     }).map(_.head)
   }
-//
-//  def findStrInName(str: String): Future[List[Stock]] = {
-//    run(quote {
-//      query[Stock].filter(_.name.contains(lift(str)))
-//    })
-//  }
 
-  def getBatch(batchSize: Int):Future[List[Stock]] = {
+  def findStrInName(str: String): Future[List[Stock]] = {
     run(quote {
-      query[Stock].take(lift(batchSize))
+      query[Stock].filter(s => s.name like s"%${lift(str)}%")
+    })
+  }
+
+  def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[Stock]] = {
+    run(quote {
+      query[Stock]
+        .drop(lift(offset - 1))
+        .filter(s => s.name like s"%${lift(searchedStr)}%")
+        .take(lift(querySize))
     })
   }
 

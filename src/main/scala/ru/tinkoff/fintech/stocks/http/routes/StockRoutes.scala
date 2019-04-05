@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
 
 class StockRoutes(implicit val exctx: ExecutionContext,
                   implicit val qctx: PostgresAsyncContext[Escape],
-                  implicit val system: ActorSystem) extends    FailFastCirceSupport with JwtHelper {
+                  implicit val system: ActorSystem) extends FailFastCirceSupport {
 
   val stockPackageDao = new StocksPackageDao()
   val stockDao = new StockDao()
@@ -34,22 +34,22 @@ class StockRoutes(implicit val exctx: ExecutionContext,
 
     pathPrefix("api" / "stocks") {
       get {
-        parameter(
-          "search".as[Option[String]],
-          "count".as[Option[Int]],
-          "itemId".as[Option[Int]]
-        ) { (search, count, itemId) => {
-          search match {
-            case Some(value) => ??? //stockDao.findStrInName(value) // go to stocksDao.find(value)
-            case None => ???
+        parameters(
+          "search".?,
+          "count".as[Int] ?,
+          "itemId".as[Int] ?
+        ).as(Requests.StocksParameters) { params =>
+          val res = stocksService.getStocksPage(
+            params.search.getOrElse(""),
+            params.count.getOrElse(10),
+            params.itemId.getOrElse(1))
+          onComplete(res) {
+            case Success(stocksPage) => complete(StatusCodes.OK, stocksPage)
           }
-          //          val res = stocksService.accountInfo(login)
-          //          onComplete(res) {
-          //            case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
-          //          }
-        }
         }
       }
     }
   }
 }
+
+
