@@ -31,11 +31,25 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
       path("buy") {
         authenticated { claim =>
           post {
-            entity(as[Requests.TransactionBuy]) { buy =>
+            entity(as[Requests.Transaction]) { buy =>
               val login = getLoginFromClaim(claim)
               logger.info(s"begin transaction buy: Stock ${buy.stockId}, amount ${buy.amount} ")
-              val purchase = transactionService.purchaseStock(login,buy.stockId, buy.amount)
-              onSuccess(purchase) { _ => complete(StatusCodes.OK) }
+
+              val purchase = transactionService.buyStock(login,buy.stockId, buy.amount)
+              onSuccess(purchase) {valBuy => complete(StatusCodes.OK,valBuy) }
+            }
+          }
+        }
+      }~
+      path("sell") {
+        authenticated { claim =>
+          post {
+            entity(as[Requests.Transaction]) { sell =>
+              val login = getLoginFromClaim(claim)
+              logger.info(s"begin transaction sell: Stock ${sell.stockId}, amount ${sell.amount} ")
+
+              val sale = transactionService.saleStock(login,sell.stockId, sell.amount)
+              onSuccess(sale) {valSell => complete(StatusCodes.OK,valSell) }
             }
           }
         }

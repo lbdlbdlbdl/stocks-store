@@ -4,7 +4,7 @@
 		module="stocks-store-build"
 		revision="0.1.0-SNAPSHOT"
 		status="integration"
-		publication="20190404001401"
+		publication="20190405201221"
 		e:sbtVersion="1.0" e:scalaVersion="2.12"
 	>
 		<description>

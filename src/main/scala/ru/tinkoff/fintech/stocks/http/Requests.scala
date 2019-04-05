@@ -8,5 +8,5 @@ object Requests {
 
   case class RefreshToken(refreshToken: String)
 
-  case class TransactionBuy(stockId: String, amount: String)
+  case class Transaction(stockId: Long, amount: Int)
 }

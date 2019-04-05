@@ -23,7 +23,7 @@ create table "StocksPackage" (
 "id" serial primary key,
 "userId" integer not null ,
 "stockId" integer not null ,
-"count" integer not null
+"count" integer  null
 );
 
 
