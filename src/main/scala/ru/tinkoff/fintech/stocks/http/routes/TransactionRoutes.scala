@@ -10,6 +10,7 @@ import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
+import scala.util.Success
 
 class TransactionRoutes(implicit val exctx: ExecutionContext,
                         implicit val qctx: PostgresAsyncContext[Escape],
@@ -34,10 +35,10 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
             entity(as[Requests.Transaction]) { buy =>
               val login = getLoginFromClaim(claim)
               logger.info(s"begin transaction buy: Stock ${buy.stockId}, amount ${buy.amount} ")
-
               val purchase = transactionService.buyStock(login,buy.stockId, buy.amount)
-              onSuccess(purchase) {valBuy => complete(StatusCodes.OK,valBuy) }
-            }
+              onComplete(purchase) {
+                case Success(value) => complete(StatusCodes.OK, value)
+              }            }
           }
         }
       }~
@@ -47,13 +48,25 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
             entity(as[Requests.Transaction]) { sell =>
               val login = getLoginFromClaim(claim)
               logger.info(s"begin transaction sell: Stock ${sell.stockId}, amount ${sell.amount} ")
-
               val sale = transactionService.saleStock(login,sell.stockId, sell.amount)
-              onSuccess(sale) {valSell => complete(StatusCodes.OK,valSell) }
+              onComplete(sale) {
+                case Success(value) => complete(StatusCodes.OK, value)
+              }
             }
           }
         }
-      }
+      }~
+        path("history") {
+          authenticated { claim =>
+            get {
+                val login = getLoginFromClaim(claim)
+                val history = transactionService.history(login)
+                onComplete(history) {
+                  case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
+                }
+              }
+          }
+        }
     }
   }
 }

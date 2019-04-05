@@ -4,9 +4,15 @@ import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, UserDao}
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
-import ru.tinkoff.fintech.stocks.http.{Companion, JwtHelper}
+import ru.tinkoff.fintech.stocks.http.JwtHelper
+import ru.tinkoff.fintech.stocks.http.Responses
 
 import scala.concurrent.{ExecutionContext, Future}
+import java.time.LocalDateTime
+
+import ru.tinkoff.fintech.stocks.http.Responses.HistoryTransaction
+
+case class Companion (user:User, packag:Option[StocksPackage], stock:Stock)
 
 class TransactionService(
                           val stocksPackageDao: StocksPackageDao,
@@ -69,6 +75,15 @@ class TransactionService(
       }
 
     } yield ()
+
+
+  }
+
+  def history(login: String): Future[HistoryTransaction] = {
+    for {
+
+
+    } yield HistoryTransaction()
 
 
   }

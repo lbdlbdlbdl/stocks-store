@@ -22,19 +22,19 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
 
   def findByStock(userId: Long,stockId:Long): Future[Option[StocksPackage]] = {
     run(quote {
-      query[StocksPackage].filter(x=> x.userId == lift(userId)&& x.stockId == lift(stockId)).map(_.headOption)
-    })
+      query[StocksPackage].filter(x=> x.userId == lift(userId)&& x.stockId == lift(stockId)).take(1)
+    }).map(_.headOption)
   }
 
   def add(stocksPack: StocksPackage): Future[StocksPackage] = {
-    log.info("start add stockspackage\n")
+    log.info("start add stockspackage")
     run(quote {
       query[StocksPackage].insert(lift(stocksPack)).returning(_.id)
     }).map(newId => stocksPack.copy(id = newId))
   }
 
   def updatePackage (id:Long,newCount:Double): Future[Unit] = {
-    log.info(s"update package id=$id new count=$newCount\n")
+    log.info(s"update package id=$id new count=$newCount")
     run(quote {
       query[StocksPackage].filter(_.id.get==lift(id)).update(_.count->lift(newCount))
     })
