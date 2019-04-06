@@ -29,15 +29,15 @@ class UserService(val userDao: UserDao,
     stocksPackageDao.add(StocksPackage(None, user.id.get, 2, 2))
   }
 
-  private def newStockResponse(st: Future[Stock], count: StocksPackage): Future[Responses.Stock] =
-    st.map(s => Responses.Stock(s.id, s.code, s.name, s.iconUrl, s.buyPrice, 0, count.count)) //изменить priceDelta
+  private def newStockBatchResponse(st: Future[Stock], count: StocksPackage): Future[Responses.StockBatch] =
+    st.map(s => Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, 0, count.count)) //изменить priceDelta
 
   def accountInfo(login: String): Future[Responses.AccountInfo] = {
 
-    def stockList(stocksPackage: List[StocksPackage], accumStocks: List[Future[Responses.Stock]] = Nil): Future[List[Responses.Stock]] = {
+    def stockList(stocksPackage: List[StocksPackage], accumStocks: List[Future[Responses.StockBatch]] = Nil): Future[List[Responses.StockBatch]] = {
       stocksPackage match {
-        case stock :: Nil => Future.sequence(accumStocks :+ newStockResponse(stockDao.getStock(stock.stockId), stock))
-        case stock :: tail => stockList(tail, accumStocks :+ newStockResponse(stockDao.getStock(stock.stockId), stock))
+        case stock :: Nil => Future.sequence(accumStocks :+ newStockBatchResponse(stockDao.getStock(stock.stockId), stock))
+        case stock :: tail => stockList(tail, accumStocks :+ newStockBatchResponse(stockDao.getStock(stock.stockId), stock))
         case _ => Future(Nil)
       }
     }
@@ -68,19 +68,6 @@ class UserService(val userDao: UserDao,
       tokens = getTokens(user)
     } yield Responses.Token(tokens.accessToken, tokens.refreshToken)
 
-
-  /*
-  def createUser(login: String, password: String): Future[Boolean] = {
-    for {
-      maybeUser <- userDao.find(login)
-      res <-
-        if (maybeUser.isDefined) Future.successful(false)
-        else userDao
-          .add(User(None, login, User.dummyHash(password), User.dummySalt))
-          .map(_ => true)
-    } yield res
-  }
-  */
 
   def getTokens(user: User): Responses.Token = generateTokens(Requests.AuthData(user.login))
 

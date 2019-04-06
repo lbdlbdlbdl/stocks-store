@@ -4,7 +4,15 @@ object Responses {
 
   case class Token(accessToken: String, refreshToken: String)
 
-  case class AccountInfo(name: String, balance: Double, stocks: List[Stock])
+  case class AccountInfo(name: String, balance: Double, stocks: List[StockBatch])
+
+  case class StockBatch(id: Long,
+                        code: String,
+                        name: String,
+                        iconUrl: String = "icon.jpg",
+                        price: Double,
+                        priceDelta: Double,
+                        count: Int)
 
   case class Stock(id: Long,
                     code: String,
@@ -24,5 +32,7 @@ object Responses {
                            code: String,
                            name: String,
                            iconUrl: String = "icon.jpg")
+
+  case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[Stock])
 
 }
