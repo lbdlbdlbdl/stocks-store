@@ -2,7 +2,7 @@ package ru.tinkoff.fintech.stocks.dao
 
 import akka.actor.ActorSystem
 import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.{StocksPackage, User}
+import ru.tinkoff.fintech.stocks.db.StocksPackage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -10,8 +10,9 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
                        implicit val exctx: ExecutionContext,
                        implicit val system: ActorSystem) {
 
-  import context._
   import akka.event.Logging
+  import context._
+
   val log = Logging.getLogger(system, this)
 
   def find(userId: Long): Future[List[StocksPackage]] = {
@@ -20,9 +21,9 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
     })
   }
 
-  def findByStock(userId: Long,stockId:Long): Future[Option[StocksPackage]] = {
+  def findByStock(userId: Long, stockId: Long): Future[Option[StocksPackage]] = {
     run(quote {
-      query[StocksPackage].filter(x=> x.userId == lift(userId)&& x.stockId == lift(stockId)).take(1)
+      query[StocksPackage].filter(x => x.userId == lift(userId) && x.stockId == lift(stockId)).take(1)
     }).map(_.headOption)
   }
 
@@ -33,11 +34,12 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(newId => stocksPack.copy(id = newId))
   }
 
-  def updatePackage (id:Long,newCount:Double): Future[Unit] = {
-    log.info(s"update package id=$id new count=$newCount")
-    run(quote {
-      query[StocksPackage].filter(_.id.get==lift(id)).update(_.count->lift(newCount))
-    })
+  def updatePackage(id: Long, newCount:Int): Future[Unit] = {
+    Future {
+      log.info(s"update package id=$id new count=$newCount")
+      run(quote {
+        query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
+      })
+    }
   }
-
 }

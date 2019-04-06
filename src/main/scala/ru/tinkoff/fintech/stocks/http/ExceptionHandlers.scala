@@ -12,7 +12,7 @@ object ExceptionHandlers extends FailFastCirceSupport {
   final case class ErrorBody(statusCode: String, message: String)
 
   private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
-
+    import io.circe.generic.auto._
     val body = ErrorBody(statusCode.toString(), exception.getMessage)
     extractUri { uri => complete(statusCode, body) }
   }

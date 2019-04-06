@@ -31,16 +31,12 @@ class UserDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(newId => user.copy(id = newId))
   }
 
-  def updateBalance (login:String,newBalance:Double): Future[Unit] = {
-    run(quote {
-      query[User].filter(_.login==lift(user)).update(_.balance->lift(newBalance))
-    })
+  def updateBalance(login: String, newBalance: Double): Future[Unit] = {
+    Future {
+      run(quote {
+        query[User].filter(_.login == lift(login)).update(_.balance -> lift(newBalance))
+      })
+    }
   }
-
-//  def update(id: Long, minusBalance: Double): Future[User] = {
-//    run(quote {
-//      query[User].filter(_.id == lift(id)).update(u => u.balance -> (u.balance - lift(minusBalance)))
-//    })
-//  }
 
 }

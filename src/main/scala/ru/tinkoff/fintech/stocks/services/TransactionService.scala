@@ -1,7 +1,6 @@
 package ru.tinkoff.fintech.stocks.services
 
 import akka.actor.ActorSystem
-import cats.instances.map
 import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, TransactionHistoryDao, UserDao}
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.http.Exceptions._

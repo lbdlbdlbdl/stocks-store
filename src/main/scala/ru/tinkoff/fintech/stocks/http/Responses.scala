@@ -14,13 +14,14 @@ object Responses {
                         priceDelta: Double,
                         count: Int)
 
+  case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[Stock])
+
   case class Stock(id: Long,
                     code: String,
                     name: String,
                     iconUrl: String = "icon.jpg",
                     price: Double,
-                    priceDelta: Double,
-                    count: Int)
+                    priceDelta: Double)
 
   case class HistoryTransaction(stock:StockHistory,
                                  amount:Int,
@@ -33,6 +34,6 @@ object Responses {
                            name: String,
                            iconUrl: String = "icon.jpg")
 
-  case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[Stock])
+
 
 }

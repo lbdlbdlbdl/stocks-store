@@ -6,9 +6,9 @@ import ru.tinkoff.fintech.stocks.db.TransactionHistory
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TransactionHistoryDao (implicit val context: PostgresAsyncContext[Escape],
-                             implicit val exctx: ExecutionContext,
-                             implicit val system: ActorSystem) {
+class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
+                            implicit val exctx: ExecutionContext,
+                            implicit val system: ActorSystem) {
 
   import context._
 

@@ -19,7 +19,8 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
   val stockPackageDao = new StocksPackageDao()
   val stockDao = new StockDao()
   val userDao = new UserDao()
-  val transactionService = new TransactionService(stockPackageDao, stockDao,userDao)
+  val transactionHistoryDao= new TransactionHistoryDao()
+  val transactionService = new TransactionService(stockPackageDao, stockDao,userDao,transactionHistoryDao)
 
   import akka.event.Logging
 
