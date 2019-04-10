@@ -39,7 +39,8 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
               val purchase = transactionService.buyStock(login,buy.stockId, buy.amount)
               onComplete(purchase) {
                 case Success(value) => complete(StatusCodes.OK, value)
-              }            }
+              }
+            }
           }
         }
       }~

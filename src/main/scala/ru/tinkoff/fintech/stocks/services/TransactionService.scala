@@ -5,7 +5,7 @@ import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, TransactionHis
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
-import ru.tinkoff.fintech.stocks.http.Responses.{HistoryTransaction, StockHistory}
+import ru.tinkoff.fintech.stocks.http.Responses.{HistoryTransaction, StockHistory,TransactionSuccess}
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.LocalDateTime
@@ -24,26 +24,23 @@ class TransactionService(
 
   val log = Logging.getLogger(system, this)
 
-  //переделать с использованием Cats!!!
-
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
   def companion(login: String, idStock: Long, amount: Int): Future[Companion] = {
     if (amount <= 0) throw ValidationException(s"Invalid value amount=$amount")
     for {
       user <- userDao.find(login)
-      userInfo = user match {
-        case Some(value) => value
-        case None => throw new Exception("User not found.")
-      }
-      package_ <- stocksPackageDao.findByStock(userInfo.id.get, idStock)
-      stock <- stockDao.getStock(idStock)
-    } yield Companion(userInfo, package_, stock)
+      userInfo = user.getOrElse(throw new Exception("User not found."))
+      stock <- stockDao.getStockOption(idStock)
+      package_ <-
+        if(stock.isDefined) stocksPackageDao.findByStock(userInfo.id.get, idStock)
+        else throw ValidationException(s"Stock not found id=$idStock.")
+    } yield Companion(userInfo, package_, stock.get )
 
   }
 
   def timeNow:String=LocalDateTime.now().toString
 
-  def buyStock(login: String, idStock: Long, amount: Int): Future[Unit] = {
+  def buyStock(login: String, idStock: Long, amount: Int): Future[TransactionSuccess] = {
     for {
       companion <- companion(login: String, idStock: Long, amount: Int)
       buyStock <-
@@ -59,11 +56,11 @@ class TransactionService(
       }
       history<- transactionDao.add(TransactionHistory
       (None,login,idStock,amount,companion.stock.buyPrice * amount,timeNow,"buy"))
-    } yield ()
+    } yield TransactionSuccess()
 
   }
 
-  def saleStock(login: String, idStock: Long, amount: Int): Future[Unit] = {
+  def saleStock(login: String, idStock: Long, amount: Int): Future[TransactionSuccess] = {
     for {
       companion <- companion(login: String, idStock: Long, amount: Int)
       removePackageStock <- companion.packag match {
@@ -80,7 +77,7 @@ class TransactionService(
       history<- transactionDao.add(TransactionHistory
       (None,login,idStock,amount,companion.stock.salePrice * amount,timeNow,"sell"))
 
-    } yield ()
+    } yield TransactionSuccess()
 
 
   }

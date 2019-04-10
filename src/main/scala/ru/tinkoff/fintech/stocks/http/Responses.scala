@@ -35,5 +35,6 @@ object Responses {
                            iconUrl: String = "icon.jpg")
 
 
+  case class TransactionSuccess(status: String = "success")
 
 }
