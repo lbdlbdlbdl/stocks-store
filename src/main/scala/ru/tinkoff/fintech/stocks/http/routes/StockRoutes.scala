@@ -39,7 +39,7 @@ class StockRoutes(implicit val exctx: ExecutionContext,
           "count".as[Int] ?,
           "itemId".as[Int] ?
         ).as(Requests.StocksParameters) { params =>
-          val res = stocksService.getStocksPage(
+          val res = stocksService.stocksPage(
             params.search.getOrElse(""),
             params.count.getOrElse(10),
             params.itemId.getOrElse(1))

@@ -5,18 +5,18 @@ import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, TransactionHis
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
-import ru.tinkoff.fintech.stocks.http.Responses.{HistoryTransaction, StockHistory,TransactionSuccess}
+import ru.tinkoff.fintech.stocks.http._
+//import ru.tinkoff.fintech.stocks.http.Responses.{TransactionHistory, StockHistory, TransactionSuccess}
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.LocalDateTime
 
 case class Companion(user: User, packag: Option[StocksPackage], stock: Stock)
 
-class TransactionService(
-                          val stocksPackageDao: StocksPackageDao,
-                          val stockDao: StockDao,
-                          val userDao: UserDao,
-                          val transactionDao: TransactionHistoryDao)
+class TransactionService(val stocksPackageDao: StocksPackageDao,
+                         val stockDao: StockDao,
+                         val userDao: UserDao,
+                         val transactionDao: TransactionHistoryDao)
                         (implicit val exctx: ExecutionContext,
                          implicit val system: ActorSystem) extends JwtHelper {
 
@@ -25,73 +25,70 @@ class TransactionService(
   val log = Logging.getLogger(system, this)
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
-  def companion(login: String, idStock: Long, amount: Int): Future[Companion] = {
-    if (amount <= 0) throw ValidationException(s"Invalid value amount=$amount")
+  def companion(login: String, stockId: Long, amount: Int): Future[Companion] =
     for {
       user <- userDao.find(login)
       userInfo = user.getOrElse(throw new Exception("User not found."))
-      stock <- stockDao.getStockOption(idStock)
+      stock <- stockDao.getStockOption(stockId)
       package_ <-
-        if(stock.isDefined) stocksPackageDao.findByStock(userInfo.id.get, idStock)
-        else throw ValidationException(s"Stock not found id=$idStock.")
-    } yield Companion(userInfo, package_, stock.get )
+        if (stock.isDefined) stocksPackageDao.findByStock(userInfo.id.get, stockId)
+        else throw NotFoundException(s"Stock not found id=$stockId.")
+    } yield Companion(userInfo, package_, stock.get)
 
-  }
 
-  def timeNow:String=LocalDateTime.now().toString
+  def timeNow: String = LocalDateTime.now().toString
 
-  def buyStock(login: String, idStock: Long, amount: Int): Future[TransactionSuccess] = {
+  def buyStock(login: String, stockId: Long, amount: Int): Future[Responses.TransactionSuccess] = {
+    val companion = companion(login: String, stockId: Long, amount: Int).
     for {
-      companion <- companion(login: String, idStock: Long, amount: Int)
       buyStock <-
-        if (companion.user.balance < companion.stock.buyPrice * amount) throw new Exception("Insufficient funds in the account")
+        if (companion.user.balance < companion.stock.buyPrice * amount) throw ValidationException("Insufficient funds in the account")
         else {
           val newBalance = companion.user.balance - companion.stock.buyPrice * amount
-          log.info(s"update user $login new balanace $newBalance")
+          log.info(s"update user $login new balance $newBalance")
           userDao.updateBalance(login, newBalance)
         }
-      addPackageStock <- companion.packag match {
-        case Some(value) => stocksPackageDao.updatePackage(idStock, value.count + amount)
-        case None => stocksPackageDao.add(StocksPackage(None, companion.user.id.get, idStock, amount))
+      addStockPackage <- companion.packag match {
+        case Some(value) => stocksPackageDao.updatePackage(stockId, value.count + amount)
+        case None => stocksPackageDao.add(StocksPackage(None, companion.user.id.get, stockId, amount))
       }
-      history<- transactionDao.add(TransactionHistory
-      (None,login,idStock,amount,companion.stock.buyPrice * amount,timeNow,"buy"))
-    } yield TransactionSuccess()
-
+      history <- transactionDao.add(
+        TransactionHistory(None, login, stockId, amount, companion.stock.buyPrice * amount, timeNow, "buy"))
+    } yield Responses.TransactionSuccess()
   }
 
-  def saleStock(login: String, idStock: Long, amount: Int): Future[TransactionSuccess] = {
+  def saleStock(login: String, stockId: Long, amount: Int): Future[Responses.TransactionSuccess] =
     for {
-      companion <- companion(login: String, idStock: Long, amount: Int)
-      removePackageStock <- companion.packag match {
+      companion <- companion(login: String, stockId: Long, amount: Int)
+      removeStockPackage <- companion.packag match {
         case Some(value) =>
-          if (amount > value.count) throw new Exception("Not enough shares in the account")
-          else stocksPackageDao.updatePackage(idStock, value.count - amount)
-        case None => throw new Exception("Not enough shares in the account")
+          if (amount > value.count) throw ValidationException("Not enough shares in the account")
+          else stocksPackageDao.updatePackage(stockId, value.count - amount)
+        case None => throw ValidationException("Not enough shares in the account")
       }
       sellStock <- {
         val newBalance = companion.user.balance + companion.stock.salePrice * amount
         log.info(s"update user $login new balanace $newBalance")
         userDao.updateBalance(login, newBalance)
       }
-      history<- transactionDao.add(TransactionHistory
-      (None,login,idStock,amount,companion.stock.salePrice * amount,timeNow,"sell"))
+      history <- transactionDao.add(
+        TransactionHistory(None, login, stockId, amount, companion.stock.salePrice * amount, timeNow, "sell"))
 
-    } yield TransactionSuccess()
+    } yield Responses.TransactionSuccess()
 
 
+  def transformation(value: TransactionHistory): Future[Responses.TransactionHistory] = {
+    for {
+      stock <- stockDao.getStock(value.idStock)
+      sample = Responses.StockHistory(stock.id, stock.code, stock.name)
+    } yield Responses.TransactionHistory(sample, value.amount, value.totalPrice, value.date, value.`type`)
   }
-  def transformation(value:TransactionHistory): Future[HistoryTransaction] ={
-    for{
-      stock<-stockDao.getStock(value.idStock)
-      sample =StockHistory(stock.id,stock.code,stock.name)
-    }yield HistoryTransaction(sample,value.amount,value.totalPrice,value.date,value.`type`)
-  }
 
-  def history(login: String): Future[List[HistoryTransaction]] = {
+  def history(login: String): Future[List[Responses.TransactionHistory]] = {
     for {
       list <- transactionDao.find(login)
-      responses<-Future.sequence(list.map(transformation))
+      responses <- Future.sequence(list.map(transformation))
     } yield responses
   }
+
 }

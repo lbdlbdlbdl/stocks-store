@@ -21,13 +21,13 @@ class StocksService(val stocksPackageDao: StocksPackageDao,
 
   def stockResponseList(stocksList: List[Stock], accumStockRes: List[Responses.Stock] = Nil): List[Responses.Stock] = { //TORO
     stocksList match {
-      case stock :: Nil => accumStockRes:+newStockResponse(stock)
-      case stock :: tail => stockResponseList(tail,accumStockRes :+newStockResponse(stock))
+      case stock :: Nil => accumStockRes :+ newStockResponse(stock)
+      case stock :: tail => stockResponseList(tail, accumStockRes :+ newStockResponse(stock))
       case _ => Nil
     }
   }
 
-  def getStocksPage(searchStr: String, count: Int, itemId: Int): Future[Responses.StocksPage] = {
+  def stocksPage(searchStr: String, count: Int, itemId: Int): Future[Responses.StocksPage] = {
     log.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       stocks <- stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)

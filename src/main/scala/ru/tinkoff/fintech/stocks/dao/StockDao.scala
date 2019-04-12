@@ -35,6 +35,4 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
         .take(lift(querySize))
     })
   }
-
-
 }

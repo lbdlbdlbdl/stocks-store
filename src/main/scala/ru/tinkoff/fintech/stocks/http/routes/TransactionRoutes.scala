@@ -19,8 +19,8 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
   val stockPackageDao = new StocksPackageDao()
   val stockDao = new StockDao()
   val userDao = new UserDao()
-  val transactionHistoryDao= new TransactionHistoryDao()
-  val transactionService = new TransactionService(stockPackageDao, stockDao,userDao,transactionHistoryDao)
+  val transactionHistoryDao = new TransactionHistoryDao()
+  val transactionService = new TransactionService(stockPackageDao, stockDao, userDao, transactionHistoryDao)
 
   import akka.event.Logging
 
@@ -36,37 +36,51 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
             entity(as[Requests.Transaction]) { buy =>
               val login = getLoginFromClaim(claim)
               logger.info(s"begin transaction buy: Stock ${buy.stockId}, amount ${buy.amount} ")
-              val purchase = transactionService.buyStock(login,buy.stockId, buy.amount)
+              val purchase = transactionService.buyStock(login, buy.stockId, buy.amount)
               onComplete(purchase) {
                 case Success(value) => complete(StatusCodes.OK, value)
               }
             }
           }
         }
-      }~
-      path("sell") {
-        authenticated { claim =>
-          post {
-            entity(as[Requests.Transaction]) { sell =>
-              val login = getLoginFromClaim(claim)
-              logger.info(s"begin transaction sell: Stock ${sell.stockId}, amount ${sell.amount} ")
-              val sale = transactionService.saleStock(login,sell.stockId, sell.amount)
-              onComplete(sale) {
-                case Success(value) => complete(StatusCodes.OK, value)
+      } ~
+        path("sell") {
+          authenticated { claim =>
+            post {
+              entity(as[Requests.Transaction]) { sell =>
+                val login = getLoginFromClaim(claim)
+                logger.info(s"begin transaction sell: Stock ${sell.stockId}, amount ${sell.amount} ")
+                val sale = transactionService.saleStock(login, sell.stockId, sell.amount)
+                onComplete(sale) {
+                  case Success(value) => complete(StatusCodes.OK, value)
+                }
               }
             }
           }
-        }
-      }~
+        } ~
         path("history") {
           authenticated { claim =>
             get {
-                val login = getLoginFromClaim(claim)
-                val history = transactionService.history(login)
-                onComplete(history) {
-                  case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
+              parameters(
+                "search".?,
+                "count".as[Int] ?,
+                "itemId".as[Int] ?
+              ).as(Requests.StocksParameters) { params =>
+                val res = stocksService.getStocksPage(
+                  params.search.getOrElse(""),
+                  params.count.getOrElse(10),
+                  params.itemId.getOrElse(1))
+                onComplete(res) {
+                  case Success(stocksPage) => complete(StatusCodes.OK, stocksPage)
                 }
               }
+
+              val login = getLoginFromClaim(claim)
+              val history = transactionService.history(login)
+              onComplete(history) {
+                case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
+              }
+            }
           }
         }
     }

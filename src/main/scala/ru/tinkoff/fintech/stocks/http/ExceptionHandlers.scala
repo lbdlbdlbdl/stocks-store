@@ -13,7 +13,7 @@ object ExceptionHandlers extends FailFastCirceSupport {
 
   private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
     import io.circe.generic.auto._
-    val body = ErrorBody(statusCode.toString(), exception.getMessage)
+    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage} ${exception.printStackTrace()}")
     extractUri { uri => complete(statusCode, body) }
   }
 
