@@ -29,8 +29,8 @@ object Server extends JwtHelper {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-//    flyway.clean()
-//    flyway.baseline()
+    //    flyway.clean()
+    //    flyway.baseline()
     flyway.migrate()
   }
 
@@ -48,7 +48,7 @@ object Server extends JwtHelper {
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()
 
-//    implicit val logger = Logging(system, getClass)
+    //    implicit val logger = Logging(system, getClass)
 
 
     def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
@@ -71,15 +71,15 @@ object Server extends JwtHelper {
       val corsSettings = CorsSettings.defaultSettings.withAllowedOrigins(HttpOriginMatcher.`*`)
 
       withLogging {
-        handleExceptions(CustomExceptionHandler) {
-          cors(corsSettings) {
+        cors(corsSettings) {
+          handleExceptions(CustomExceptionHandler) {
             ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
           }
         }
       }
     }
-        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+    //        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }
