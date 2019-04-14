@@ -71,11 +71,11 @@ object Server extends JwtHelper {
       val corsSettings = CorsSettings.defaultSettings.withAllowedOrigins(HttpOriginMatcher.`*`)
 
       withLogging {
-        cors(corsSettings) {
+//        cors(corsSettings) {
           handleExceptions(CustomExceptionHandler) {
             ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
           }
-        }
+//        }
       }
     }
             Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
