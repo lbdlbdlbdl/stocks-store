@@ -8,6 +8,7 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.LogEntry
 import akka.stream.{ActorMaterializer, Materializer}
+import ch.megard.akka.http.cors.scaladsl.model.HttpOriginMatcher
 import ch.megard.akka.http.cors.scaladsl.settings
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
@@ -67,9 +68,11 @@ object Server extends JwtHelper {
       val ar = new AccountRoutes()
       val sr = new StockRoutes()
 
+      val corsSettings = CorsSettings.defaultSettings.withAllowedOrigins(HttpOriginMatcher.`*`)
+
       withLogging {
         handleExceptions(CustomExceptionHandler) {
-          cors() {
+          cors(corsSettings) {
             ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
           }
         }
