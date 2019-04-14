@@ -8,6 +8,8 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.LogEntry
 import akka.stream.{ActorMaterializer, Materializer}
+import ch.megard.akka.http.cors.scaladsl.settings
+import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
@@ -59,6 +61,7 @@ object Server extends JwtHelper {
     val allRoutes = {
 
       import ru.tinkoff.fintech.stocks.http.ExceptionHandlers._
+      import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
       val ur = new UserRoutes()
       val ar = new AccountRoutes()
@@ -66,7 +69,9 @@ object Server extends JwtHelper {
 
       withLogging {
         handleExceptions(CustomExceptionHandler) {
-          ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
+          cors() {
+            ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes
+          }
         }
       }
     }
