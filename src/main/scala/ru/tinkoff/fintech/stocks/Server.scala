@@ -78,8 +78,8 @@ object Server extends JwtHelper {
         }
       }
     }
-            Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+    //        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }
