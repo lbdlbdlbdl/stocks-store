@@ -6,8 +6,10 @@ import com.typesafe.config.ConfigFactory
 import io.circe.generic.auto._
 import io.circe.syntax._
 import pdi.jwt._
-import io.circe._, io.circe.parser._
+import io.circe._
+import io.circe.parser._
 import ru.tinkoff.fintech.stocks.http.Exceptions._
+import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 
 /** *
   * Useful for gated routes and not only.

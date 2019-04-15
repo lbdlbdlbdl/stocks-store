@@ -10,6 +10,7 @@ import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, UserDao}
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
 import akka.http.scaladsl.server.Directives.logRequest
+import ru.tinkoff.fintech.stocks.http.dtos.Requests
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

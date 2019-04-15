@@ -6,6 +6,7 @@ import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage, User, _}
 import ru.tinkoff.fintech.stocks.http.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
+import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 
 import scala.concurrent.{ExecutionContext, Future}
 

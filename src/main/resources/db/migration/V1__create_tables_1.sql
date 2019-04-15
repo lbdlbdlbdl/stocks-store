@@ -29,7 +29,7 @@ create table "StocksPackage" (
 create table "TransactionHistory"(
 "id" serial primary key,
 "login" varchar(64) not null unique,
-"idStock" serial not null,
+"stockId" serial not null references "Stock"("id"),
 "amount" integer  not null,
 "totalPrice" float not null,
 "date" varchar(32)   not null,

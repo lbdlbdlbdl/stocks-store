@@ -1,4 +1,4 @@
-package ru.tinkoff.fintech.stocks.http
+package ru.tinkoff.fintech.stocks.http.dtos
 
 object Requests {
 
@@ -12,7 +12,7 @@ object Requests {
     require(amount >=0, "amount mast have positive value")
   }
 
-  case class StocksParameters(search: Option[String], count: Option[Int], itemId: Option[Int])
+  case class PageParameters(search: Option[String], count: Option[Int], itemId: Option[Int])
   //    require(3 <= search.get.length && search.get.length <= 100, "search string length must be between 3 and 100")
   //    require(1 <= count.get && count.get <= 50, "count in query must be between 1 and 50")
   //    require(1 <= itemId.get, "itemId must be minimum 1")

@@ -3,7 +3,8 @@ package ru.tinkoff.fintech.stocks.services
 import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao}
 import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
-import ru.tinkoff.fintech.stocks.http.{JwtHelper, Responses}
+import ru.tinkoff.fintech.stocks.http.JwtHelper
+import ru.tinkoff.fintech.stocks.http.dtos.Responses
 
 import scala.concurrent.{ExecutionContext, Future}
 

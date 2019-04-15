@@ -1,4 +1,4 @@
-package ru.tinkoff.fintech.stocks.http
+package ru.tinkoff.fintech.stocks.http.dtos
 
 object Responses {
 
@@ -26,7 +26,7 @@ object Responses {
   case class StockHistory(id: Long,
                           code: String,
                           name: String,
-                          iconUrl: String = "icon.jpg")
+                          iconUrl: String)
 
   case class TransactionHistory(stock: StockHistory,
                                 amount: Int,

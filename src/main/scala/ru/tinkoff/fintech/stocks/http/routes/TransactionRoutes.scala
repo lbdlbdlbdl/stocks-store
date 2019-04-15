@@ -7,6 +7,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.getquill.{Escape, PostgresAsyncContext}
 import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.http._
+import ru.tinkoff.fintech.stocks.http.dtos.Requests
 import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
@@ -65,13 +66,13 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
                 "search".?,
                 "count".as[Int] ?,
                 "itemId".as[Int] ?
-              ).as(Requests.StocksParameters) { params =>
-                val res = stocksService.getStocksPage(
+              ).as(Requests.PageParameters) { params =>
+                val res = transactionService.transactionHistoryPage(
                   params.search.getOrElse(""),
                   params.count.getOrElse(10),
                   params.itemId.getOrElse(1))
                 onComplete(res) {
-                  case Success(stocksPage) => complete(StatusCodes.OK, stocksPage)
+                  case Success(tHisPage) => complete(StatusCodes.OK, tHisPage)
                 }
               }
 

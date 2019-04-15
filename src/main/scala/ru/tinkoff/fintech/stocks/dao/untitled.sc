@@ -1,1 +1,0 @@
-List[Int]().take(1).map(_.headOption)
