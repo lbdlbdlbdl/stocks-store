@@ -9,7 +9,7 @@ object Responses {
   case class StockBatch(id: Long,
                         code: String,
                         name: String,
-                        iconUrl: String = "icon.jpg",
+                        iconUrl: String,
                         price: Double,
                         priceDelta: Double,
                         count: Int)
@@ -17,7 +17,7 @@ object Responses {
   case class Stock(id: Long,
                    code: String,
                    name: String,
-                   iconUrl: String = "icon.jpg",
+                   iconUrl: String,
                    price: Double,
                    priceDelta: Double)
 

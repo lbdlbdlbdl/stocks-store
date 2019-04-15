@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.LogEntry
@@ -29,8 +30,8 @@ object Server extends JwtHelper {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-        flyway.clean()
-        flyway.baseline()
+    //        flyway.clean()
+    //        flyway.baseline()
     flyway.migrate()
   }
 
@@ -78,8 +79,8 @@ object Server extends JwtHelper {
         }
       }
     }
-            Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+      //    Http().bindAndHandle(allRoutes, "localhost", port) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }
