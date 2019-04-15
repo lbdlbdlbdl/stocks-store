@@ -24,7 +24,7 @@ class UserService(val userDao: UserDao,
   def addStocksForNewUser(user: User): Unit = {
     //transaction
     //UPDATE BALANCE
-    log.info(s"begin add stocks for new user")
+    log.info(s"begin add stocks for new user\n")
     stocksPackageDao.add(StocksPackage(None, user.id.get, 1, 4))
     stocksPackageDao.add(StocksPackage(None, user.id.get, 2, 2))
   }

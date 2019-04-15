@@ -1,6 +1,5 @@
 package ru.tinkoff.fintech.stocks.http
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import com.typesafe.config.ConfigFactory

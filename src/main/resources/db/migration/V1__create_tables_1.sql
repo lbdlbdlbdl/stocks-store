@@ -23,11 +23,20 @@ create table "StocksPackage" (
 "id" serial primary key,
 "userId" integer not null ,
 "stockId" integer not null ,
-"count" integer not null
+"count" integer  null
 );
+
+create table "TransactionHistory"(
+"id" serial primary key,
+"login" varchar(64) not null unique,
+"idStock" serial not null,
+"amount" integer  not null,
+"totalPrice" float not null,
+"date" varchar(32)   not null,
+ "type" varchar(8)   not null)
 
 
 -- INSERT INTO "Stock" VALUES (1, "TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);
 -- INSERT INTO "Stock" VALUES (2, "Raiffeisen Bank", "EUR", "icon.jpg", 20.08, 15.97);
 -- INSERT INTO "Stock" VALUES (3, "Sberbank", "RUB", "icon.jpg", 217.08, 150.00);
--- INSERT INTO "Stock"(id,  name, code, iconUrl,salePrice,buyPrice) VALUES ("TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);
+-- INSERT INTO "Stock"(id,  name, code, iconUrl,salePrice,buyPrice) VALUES ("TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);2

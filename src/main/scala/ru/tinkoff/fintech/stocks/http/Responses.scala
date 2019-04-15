@@ -23,4 +23,19 @@ object Responses {
 
   case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[Stock])
 
+  case class StockHistory(id: Long,
+                          code: String,
+                          name: String,
+                          iconUrl: String = "icon.jpg")
+
+  case class TransactionHistory(stock: StockHistory,
+                                amount: Int,
+                                totalPrice: Double,
+                                date: String,
+                                `type`: String)
+
+  case class TransactionHistoryPage(nextItemId: Long, prevItemId: Long, items: List[TransactionHistory])
+
+  case class TransactionSuccess(status: String = "success")
+
 }

@@ -16,7 +16,11 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
       query[Stock].filter(_.id == lift(id)).take(1)
     }).map(_.head)
   }
-
+  def getStockOption(id: Long): Future[Option[Stock]] = {
+    run(quote {
+      query[Stock].filter(_.id == lift(id)).take(1)
+    }).map(_.headOption)
+  }
   def findStrInName(str: String): Future[List[Stock]] = {
     run(quote {
       query[Stock].filter(s => s.name like s"%${lift(str)}%")
@@ -31,6 +35,4 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
         .take(lift(querySize))
     })
   }
-
-
 }
