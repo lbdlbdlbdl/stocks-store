@@ -79,36 +79,26 @@ class TransactionService(val stocksPackageDao: StocksPackageDao,
   def transformation(value: TransactionHistory): Future[Responses.TransactionHistory] = {
     for {
       stock <- stockDao.getStock(value.stockId)
-      sample = Responses.StockHistory(stock.id, stock.code, stock.name)
+      sample = Responses.StockHistory(stock.id, stock.code, stock.name, stock.iconUrl)
     } yield Responses.TransactionHistory(sample, value.amount, value.totalPrice, value.date, value.`type`)
   }
 
+  /*
   def history(login: String): Future[List[Responses.TransactionHistory]] = {
     for {
       list <- transactionDao.find(login)
       responses <- Future.sequence(list.map(transformation))
     } yield responses
   }
+  */
 
   def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Future[Responses.TransactionHistoryPage] = {
     log.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       tHises <- transactionDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
+      responses <- Future.sequence(tHises.map(transformation))
       lastId = tHises.last.id
-    } yield Responses.TransactionHistoryPage(lastId, itemId, stockResponseList(stocks.take(count)))
+    } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
   }
 
-  private def newStockResponse(th: TransactionHistory): Responses.TransactionHistory = //TORO
-    ???
-
-
-  def stockResponseList(stocksList: List[TransactionHistory], accumStockRes: List[Responses.TransactionHistory] = Nil): List[Responses.TransactionHistory] = { //TORO
-    stocksList match {
-      case stock :: Nil => accumStockRes :+ newStockResponse(stock)
-      case stock :: tail => stockResponseList(tail, accumStockRes :+ newStockResponse(stock))
-      case _ => Nil
-    }
-
-
-  }
 }

@@ -75,12 +75,6 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
                   case Success(tHisPage) => complete(StatusCodes.OK, tHisPage)
                 }
               }
-
-              val login = getLoginFromClaim(claim)
-              val history = transactionService.history(login)
-              onComplete(history) {
-                case Success(accountInfo) => complete(StatusCodes.OK, accountInfo)
-              }
             }
           }
         }
