@@ -13,6 +13,7 @@ import cats.syntax.either._
 import io.circe._
 import io.circe.parser._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import ru.tinkoff.fintech.stocks.http.dtos.Requests.RangeHistory
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -23,7 +24,8 @@ class StockRoutes(implicit val exctx: ExecutionContext,
 
   val stockPackageDao = new StocksPackageDao()
   val stockDao = new StockDao()
-  val stocksService = new StocksService(stockPackageDao, stockDao)
+  val priceHistoryDao = new  PriceHistoryDao()
+  val stocksService = new StocksService(stockPackageDao, stockDao, priceHistoryDao)
 
   import akka.event.Logging
 
@@ -33,6 +35,18 @@ class StockRoutes(implicit val exctx: ExecutionContext,
     import io.circe.generic.auto._
 
     pathPrefix("api" / "stocks") {
+      path(IntNumber /"history"){(id)=>
+        get {
+          parameters(
+            "range".?
+          ).as(RangeHistory)  { params =>
+            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
+            onComplete(res) {
+              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
+            }
+          }
+        }
+      }
       get {
         parameters(
           "search".?,

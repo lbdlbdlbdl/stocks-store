@@ -1,15 +1,19 @@
 package ru.tinkoff.fintech.stocks.services
 
+import java.time.LocalDate
+
 import akka.actor.ActorSystem
-import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao}
-import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
+import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao, StocksPackageDao}
+import ru.tinkoff.fintech.stocks.db.Stock
+import ru.tinkoff.fintech.stocks.http.Exceptions.{NotFoundException, ValidationException}
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class StocksService(val stocksPackageDao: StocksPackageDao,
-                    val stockDao: StockDao)
+                    val stockDao: StockDao,
+                    val priceHistoryDao: PriceHistoryDao)
                    (implicit val exctx: ExecutionContext,
                     implicit val system: ActorSystem) extends JwtHelper {
 
@@ -36,6 +40,29 @@ class StocksService(val stocksPackageDao: StocksPackageDao,
     } yield Responses.StocksPage(lastId, itemId, stockResponseList(stocks.take(count)))
   }
 
+  def date = LocalDate.now()
+
+  def fromDate(range: String) = range match {
+    case "day" => date.minusDays(1)
+    case "week" => date.minusDays(7)
+    case "month" => date.minusMonths(1)
+    case "6months" => date.minusMonths(6)
+    case "year" => date.minusYears(1)
+    case "total" => LocalDate.ofEpochDay(1)
+    case _ => throw ValidationException(s"incorrect range=$range")
+  }
+
+
+  def stocksHistory(range: String, id: Long): Future[Responses.PriceHistory] = {
+    log.info(s"begin get price history per share id=$id during the period=$range")
+    for {
+      stockOption <- stockDao.getStockOption(id)
+      stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
+      dateFrom=fromDate(range).toString
+      listHistory <- priceHistoryDao.find(id, dateFrom)
+      prices=listHistory.map(s=>Responses.PricePackage(s.date,s.price))
+    } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date.toString,prices)
+  }
 }
 
 

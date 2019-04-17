@@ -38,4 +38,15 @@ object Responses {
 
   case class TransactionSuccess(status: String = "success")
 
+  case class PriceHistory(
+                           id: Long,
+                           code: String,
+                           name: String,
+                           iconUrl: String,
+                           from: String,
+                           to: String,
+                           history: List[PricePackage])
+
+  case class PricePackage(date: String, price: Double)
+
 }

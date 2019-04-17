@@ -33,9 +33,14 @@ create table "TransactionHistory"(
 "amount" integer  not null,
 "totalPrice" float not null,
 "date" varchar(32)   not null,
- "type" varchar(8)   not null)
+ "type" varchar(8)   not null);
 
-
+create table "StocksPackage" (
+"id" serial primary key,
+"stockId" integer not null ,
+"date" varchar  not null,
+"price" float not null
+)
 -- INSERT INTO "Stock" VALUES (1, "TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);
 -- INSERT INTO "Stock" VALUES (2, "Raiffeisen Bank", "EUR", "icon.jpg", 20.08, 15.97);
 -- INSERT INTO "Stock" VALUES (3, "Sberbank", "RUB", "icon.jpg", 217.08, 150.00);
