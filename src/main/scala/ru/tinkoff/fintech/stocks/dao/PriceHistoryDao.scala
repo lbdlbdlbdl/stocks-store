@@ -12,13 +12,9 @@ class PriceHistoryDao(implicit val context: PostgresAsyncContext[Escape],
 
   import context._
 
-  def find(idStock:Long,fromDate:String): Future[List[PriceHistory]] = {
-    def parse(date:String)={
-      date.take(4).toInt*10000+date.slice(5, 7).toInt*100+date.slice(8, 10).toInt
-    }
-
+  def find(idStock:Long):Future[List[PriceHistory]] = {
     run(quote {
-      query[PriceHistory].filter(history => parse(history.date)< lift(parse(fromDate)) && history.stockId==lift(idStock))
+      query[PriceHistory].filter(_.stockId == lift(idStock))
     })
   }
 

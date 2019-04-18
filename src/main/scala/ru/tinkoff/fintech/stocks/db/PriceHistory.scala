@@ -4,7 +4,5 @@ final case class PriceHistory (
                                 id: Option[Long],
                                 stockId: Long,
                                 date: String,
-                                price: Double)
-
-
-
+                                salePrice: Double,
+                                buyPrice:Double)
