@@ -54,10 +54,7 @@ object Server extends JwtHelper {
 
 
     def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) = {
-//      val headers = for (elem <- req.headers) {
-//        (elem.name(), elem.value())
-//      }
-      LogEntry(s"${req.method.name} - ${req.uri}, HEADERS: ${req.headers}", logLevel)
+      LogEntry(s" ${req.uri}, HEADERS: ${req.headers}", logLevel)
     }
 
     val withLogging = {

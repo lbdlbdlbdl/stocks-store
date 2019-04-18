@@ -24,7 +24,7 @@ class StockRoutes(implicit val exctx: ExecutionContext,
 
   val stockPackageDao = new StocksPackageDao()
   val stockDao = new StockDao()
-  val priceHistoryDao = new  PriceHistoryDao()
+  val priceHistoryDao = new PriceHistoryDao()
   val stocksService = new StocksService(stockPackageDao, stockDao, priceHistoryDao)
 
   import akka.event.Logging
@@ -35,35 +35,31 @@ class StockRoutes(implicit val exctx: ExecutionContext,
     import io.circe.generic.auto._
 
     pathPrefix("api" / "stocks") {
-      path(IntNumber /"history"){(id)=>
-        get {
+      get {
+        path(IntNumber / "history") { (id) =>
           parameters(
             "range".?
-          ).as(RangeHistory)  { params =>
-            complete(StatusCodes.NotAcceptable)
-//            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
-//            onComplete(res) {
-//              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
-//            }
+          ).as(RangeHistory) { params =>
+            logger.info("i try to get histories")
+            complete(StatusCodes.NotFound)
           }
-        }
-      }
-      get {
-        parameters(
-          "search".?,
-          "count".as[Int] ?,
-          "itemId".as[Int] ?
-        ).as(Requests.PageParameters) { params =>
-          val res = stocksService.stocksPage(
-            params.search.getOrElse(""),
-            params.count.getOrElse(10),
-            params.itemId.getOrElse(1))
-          onComplete(res) {
-            case Success(stocksPage) => complete(StatusCodes.OK, stocksPage)
+        } ~
+          parameters(
+            "search".?,
+            "count".as[Int] ?,
+            "itemId".as[Int] ?
+          ).as(Requests.PageParameters) { params =>
+            val res = stocksService.stocksPage(
+              params.search.getOrElse(""),
+              params.count.getOrElse(10),
+              params.itemId.getOrElse(1))
+            onComplete(res) {
+              case Success(stocksPage) => complete(StatusCodes.OK, stocksPage)
+            }
           }
-        }
       }
     }
+
   }
 }
 
