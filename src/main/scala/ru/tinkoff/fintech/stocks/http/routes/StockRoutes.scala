@@ -40,10 +40,11 @@ class StockRoutes(implicit val exctx: ExecutionContext,
           parameters(
             "range".?
           ).as(RangeHistory)  { params =>
-            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
-            onComplete(res) {
-              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
-            }
+            complete(StatusCodes.NotAcceptable)
+//            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
+//            onComplete(res) {
+//              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
+//            }
           }
         }
       }

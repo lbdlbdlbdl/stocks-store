@@ -53,8 +53,12 @@ object Server extends JwtHelper {
     //    implicit val logger = Logging(system, getClass)
 
 
-    def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
-      LogEntry(s"${req.method.name} - ${req.uri}", logLevel)
+    def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) = {
+//      val headers = for (elem <- req.headers) {
+//        (elem.name(), elem.value())
+//      }
+      LogEntry(s"${req.method.name} - ${req.uri}, HEADERS: ${req.headers}", logLevel)
+    }
 
     val withLogging = {
       import akka.http.scaladsl.server.Directives.logRequest
@@ -90,7 +94,7 @@ object Server extends JwtHelper {
 
     initializeTask()
         Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
- //   Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+//    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }

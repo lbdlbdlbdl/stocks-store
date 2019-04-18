@@ -59,9 +59,10 @@ class StocksService(val stocksPackageDao: StocksPackageDao,
       stockOption <- stockDao.getStockOption(id)
       stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
       dateFrom=fromDate(range).toString
-      listHistory <- priceHistoryDao.find(id, dateFrom)
-      prices=listHistory.map(s=>Responses.PricePackage(s.date,s.price))
-    } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date.toString,prices)
+//      listHistory <- priceHistoryDao.find(id, dateFrom)
+//      prices=listHistory.map(s=>Responses.PricePackage(s.date,s.price))
+//    } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date.toString,prices)
+  } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date.toString,Nil)
   }
 }
 
