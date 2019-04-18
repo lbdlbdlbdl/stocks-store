@@ -15,9 +15,10 @@ import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
-import ru.tinkoff.fintech.stocks.dao.StockDao
-import ru.tinkoff.fintech.stocks.http.routes.{AccountRoutes, StockRoutes, TransactionRoutes, UserRoutes}
+import ru.tinkoff.fintech.stocks.dao._
+import ru.tinkoff.fintech.stocks.http.routes._
 import ru.tinkoff.fintech.stocks.http._
+import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
@@ -54,43 +55,43 @@ object Server extends JwtHelper {
 
 
     def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
-      LogEntry(s"${req.method.name} - ${req.uri}", logLevel)
+      LogEntry(s"${req.method.name} - ${req.uri} ${req.headers}", logLevel)
 
     val withLogging = {
       import akka.http.scaladsl.server.Directives.logRequest
       logRequest(requestMethodAs(Logging.InfoLevel) _)
     }
 
+    val newEnv = Env(new UserService(), new StocksService(), new TransactionService(),
+      new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao())
+
     val allRoutes = {
 
-      import ru.tinkoff.fintech.stocks.http.ExceptionHandlers._
+      import ru.tinkoff.fintech.stocks.exception.ExceptionHandlers._
       import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
-      val ur = new UserRoutes()
-      val ar = new AccountRoutes()
-      val sr = new StockRoutes()
-      val tr = new TransactionRoutes()
+      val routes = new AllRoutes(newEnv).routes
 
       val corsSettings = CorsSettings.defaultSettings.withAllowedOrigins(HttpOriginMatcher.`*`)
 
       withLogging {
         cors(corsSettings) {
           handleExceptions(CustomExceptionHandler) {
-            ur.authRoutes ~ ar.accountRoutes ~ sr.stocksRoutes ~ tr.stocksRoutes
+            routes
           }
         }
       }
     }
 
-    implicit val stockDao: StockDao = new StockDao()
-
     def initializeTask(): Unit = {
-      new PriceGenerationTask()
+      new PriceGenerationTask(newEnv.stockDao)
     }
 
     initializeTask()
-        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
- //   Http().bindAndHandle(allRoutes, "localhost", port) andThen {
+
+
+    //    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }

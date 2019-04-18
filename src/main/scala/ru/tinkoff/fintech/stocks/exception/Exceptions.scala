@@ -1,4 +1,4 @@
-package ru.tinkoff.fintech.stocks.http
+package ru.tinkoff.fintech.stocks.exception
 
 object Exceptions {
 

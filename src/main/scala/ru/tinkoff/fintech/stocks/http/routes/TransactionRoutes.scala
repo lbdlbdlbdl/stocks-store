@@ -2,32 +2,19 @@ package ru.tinkoff.fintech.stocks.http.routes
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
+import cats.data.Reader
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.dao._
+import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
-import ru.tinkoff.fintech.stocks.services._
 
-import scala.concurrent.ExecutionContext
-import scala.util.Success
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionRoutes(implicit val exctx: ExecutionContext,
-                        implicit val qctx: PostgresAsyncContext[Escape],
-                        implicit val system: ActorSystem) extends FailFastCirceSupport with JwtHelper {
+class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
 
-  val stockPackageDao = new StocksPackageDao()
-  val stockDao = new StockDao()
-  val userDao = new UserDao()
-  val transactionHistoryDao = new TransactionHistoryDao()
-  val transactionService = new TransactionService(stockPackageDao, stockDao, userDao, transactionHistoryDao)
-
-  import akka.event.Logging
-
-  val logger = Logging(system, getClass)
-
-  val stocksRoutes = {
+  val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
 
     pathPrefix("api" / "transaction") {
@@ -36,10 +23,11 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
           post {
             entity(as[Requests.Transaction]) { buy =>
               val login = getLoginFromClaim(claim)
-              logger.info(s"begin transaction buy: Stock ${buy.stockId}, amount ${buy.amount} ")
-              val purchase = transactionService.buyStock(login, buy.stockId, buy.amount)
-              onComplete(purchase) {
-                case Success(value) => complete(StatusCodes.OK, value)
+              // logger.info(s"begin transaction buying: Stock ${buy.stockId}, amount ${buy.amount} ")
+              complete {
+                for {
+                  purchase <- env.transactionService.buyStock(login, buy.stockId, buy.amount).run(env)
+                } yield StatusCodes.OK -> purchase
               }
             }
           }
@@ -50,10 +38,11 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
             post {
               entity(as[Requests.Transaction]) { sell =>
                 val login = getLoginFromClaim(claim)
-                logger.info(s"begin transaction sell: Stock ${sell.stockId}, amount ${sell.amount} ")
-                val sale = transactionService.saleStock(login, sell.stockId, sell.amount)
-                onComplete(sale) {
-                  case Success(value) => complete(StatusCodes.OK, value)
+                //logger.info(s"begin transaction selling: Stock ${sell.stockId}, amount ${sell.amount} ")
+                complete {
+                  for {
+                    sale <- env.transactionService.saleStock(login, sell.stockId, sell.amount).run(env)
+                  } yield StatusCodes.OK -> sale
                 }
               }
             }
@@ -67,12 +56,14 @@ class TransactionRoutes(implicit val exctx: ExecutionContext,
                 "count".as[Int] ?,
                 "itemId".as[Int] ?
               ).as(Requests.PageParameters) { params =>
-                val res = transactionService.transactionHistoryPage(
-                  params.search.getOrElse(""),
-                  params.count.getOrElse(10),
-                  params.itemId.getOrElse(1))
-                onComplete(res) {
-                  case Success(tHisPage) => complete(StatusCodes.OK, tHisPage)
+                //logger.info(s"begin get transaction history page")
+                complete {
+                  for {
+                    transactionHistoryPage <- env.transactionService.transactionHistoryPage(
+                      params.search.getOrElse(""),
+                      params.count.getOrElse(10),
+                      params.itemId.getOrElse(1)).run(env)
+                  } yield StatusCodes.OK -> transactionHistoryPage
                 }
               }
             }

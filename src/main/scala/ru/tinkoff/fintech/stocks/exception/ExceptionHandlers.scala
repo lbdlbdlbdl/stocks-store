@@ -1,19 +1,19 @@
-package ru.tinkoff.fintech.stocks.http
+package ru.tinkoff.fintech.stocks.exception
 
+import akka.http.scaladsl.model.StatusCode
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.Directives.{complete, extractUri}
+import akka.http.scaladsl.server.ExceptionHandler
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import ru.tinkoff.fintech.stocks.http.Exceptions._
+import Exceptions._
 
 object ExceptionHandlers extends FailFastCirceSupport {
+  import io.circe.generic.auto._
 
   final case class ErrorBody(statusCode: String, message: String)
 
   private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
-    import io.circe.generic.auto._
-    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage} ${exception.printStackTrace()}")
+    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage}")// ${exception.printStackTrace()}")
     extractUri { uri => complete(statusCode, body) }
   }
 

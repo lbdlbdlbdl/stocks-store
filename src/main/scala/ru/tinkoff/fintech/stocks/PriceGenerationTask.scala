@@ -7,8 +7,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 //Со случайным интервалом сервер генерирует текущие цены для каждого элемента из списка акций.
-class PriceGenerationTask(implicit val actorSystem: ActorSystem,
-                          implicit val stockDao: StockDao,
+class PriceGenerationTask(stockDao: StockDao)
+                         (implicit val actorSystem: ActorSystem,
                           implicit val executionContext: ExecutionContext) {
 
   //to config

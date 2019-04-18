@@ -8,7 +8,7 @@ import io.circe.syntax._
 import pdi.jwt._
 import io.circe._
 import io.circe.parser._
-import ru.tinkoff.fintech.stocks.http.Exceptions._
+import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 
 /** *
