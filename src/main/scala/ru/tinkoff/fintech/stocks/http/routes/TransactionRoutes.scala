@@ -47,7 +47,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               }
             }
           }
-        } ~
+        } /*~
         path("history") {
           authenticated { claim =>
             get {
@@ -68,7 +68,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               }
             }
           }
-        }
+        } */
     }
   }
 }

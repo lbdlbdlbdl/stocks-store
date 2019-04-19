@@ -11,7 +11,7 @@ final case class TransactionHistory(id: Option[Long],
                                     date: String,
                                     `type`: String) {
 
-  def as[T](implicit f: TransactionHistory => T) = f(this) //carrying
+//  def as[T](implicit f: TransactionHistory => T) = f(this)
 }
 
 object TransactionHistory {

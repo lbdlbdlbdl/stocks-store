@@ -77,13 +77,13 @@ class TransactionService extends JwtHelper {
     //Responses.TransactionHistory(stock.as[Responses.StockHistory], value.amount, value.totalPrice, value.date, value.`type`)
   }
 
-  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+  /*def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
     //    log.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       tHises <- env.transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
       responses <- Future.sequence(tHises.map(transformation.run(env)))
       lastId = tHises.last.id
     } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
-  }
+  }*/
 
 }
