@@ -1,5 +1,7 @@
 package ru.tinkoff.fintech.stocks.http.dtos
 
+import java.time.LocalDate
+
 object Responses {
 
   case class Token(accessToken: String, refreshToken: String)
@@ -43,10 +45,10 @@ object Responses {
                            code: String,
                            name: String,
                            iconUrl: String,
-                           from: String,
-                           to: String,
+                           from: LocalDate,
+                           to: LocalDate,
                            history: List[PricePackage])
 
-  case class PricePackage(date: String, price: Double)
+  case class PricePackage(date:LocalDate, price: Double)
 
 }

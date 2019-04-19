@@ -1,7 +1,7 @@
 import java.time._
-import java.util.Date
+import java.time.Instant
 
 
-val j=LocalDate.ofEpochDay(1)
-val data= new  Date()
-data.toInstant
+
+val h=LocalDate.now().minusDays(1)
+val gg= LocalDate.now().isAfter(h)

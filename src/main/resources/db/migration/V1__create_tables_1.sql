@@ -38,7 +38,7 @@ create table "TransactionHistory"(
 create table "PriceHistory" (
 "id" serial primary key,
 "stockId" integer not null ,
-"date" varchar  not null,
+"date" timestamp  not null,
 "salePrice" float not null ,
 "buyPrice" float not null
 )
