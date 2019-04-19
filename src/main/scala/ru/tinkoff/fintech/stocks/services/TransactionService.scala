@@ -22,7 +22,7 @@ class TransactionService extends JwtHelper {
   def companion(login: String, stockId: Long, amount: Int): Result[Companion] = ReaderT { env =>
     for {
       user <- env.userDao.find(login)
-      userInfo = user.getOrElse(throw new Exception("User not found."))
+      userInfo = user.getOrElse(throw NotFoundException("User not found."))
       stock <- env.stockDao.getStockOption(stockId)
       package_ <-
         if (stock.isDefined) env.stocksPackageDao.findByStock(userInfo.id.get, stockId)
@@ -39,7 +39,7 @@ class TransactionService extends JwtHelper {
         if (companion.user.balance < companion.stock.buyPrice * amount) throw ValidationException("Insufficient funds in the account")
         else {
           val newBalance = companion.user.balance - companion.stock.buyPrice * amount
-//          log.info(s"update user $login new balance $newBalance")
+          //          log.info(s"update user $login new balance $newBalance")
           env.userDao.updateBalance(login, newBalance)
         }
       addStockPackage <- companion.packag match {
@@ -70,28 +70,18 @@ class TransactionService extends JwtHelper {
     } yield Responses.TransactionSuccess()
   }
 
-
   def transformation(value: TransactionHistory): Result[Responses.TransactionHistory] = ReaderT { env =>
     for {
       stock <- env.stockDao.getStock(value.stockId)
-      sample = Responses.StockHistory(stock.id, stock.code, stock.name, stock.iconUrl)
-    } yield Responses.TransactionHistory(sample, value.amount, value.totalPrice, value.date, value.`type`)
+    } yield (stock, value)
+    //Responses.TransactionHistory(stock.as[Responses.StockHistory], value.amount, value.totalPrice, value.date, value.`type`)
   }
 
-  /*
-  def history(login: String): Future[List[Responses.TransactionHistory]] = {
-    for {
-      list <- transactionDao.find(login)
-      responses <- Future.sequence(list.map(transformation))
-    } yield responses
-  }
-  */
-
-  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT{ env =>
-//    log.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
+  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+    //    log.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       tHises <- env.transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      responses <- Future.sequence(tHises.map(transformation))
+      responses <- Future.sequence(tHises.map(transformation.run(env)))
       lastId = tHises.last.id
     } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
   }

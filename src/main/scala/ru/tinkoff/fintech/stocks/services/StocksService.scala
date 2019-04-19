@@ -5,24 +5,19 @@ import java.time.LocalDate
 import akka.actor.ActorSystem
 import cats.data.{Reader, ReaderT}
 import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
+import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
-import scala.concurrent.{ExecutionContext, Future}
-
 class StocksService extends JwtHelper {
-
-  private def newStockResponse(stock: Stock): Responses.Stock = //TORO
-    Responses.Stock(stock.id, stock.code, stock.name, "icon.jpg", stock.salePrice, 0.0)
 
   def stockResponseList(stocksList: List[Stock], accumStockRes: List[Responses.Stock] = Nil): List[Responses.Stock] = { //TORO
     stocksList match {
-      case stock :: Nil => accumStockRes :+ newStockResponse(stock)
-      case stock :: tail => stockResponseList(tail, accumStockRes :+ newStockResponse(stock))
+      case stock :: Nil => accumStockRes :+ stock.as[Responses.Stock]
+      case stock :: tail => stockResponseList(tail, accumStockRes :+ stock.as[Responses.Stock])
       case _ => Nil
     }
   }
@@ -51,13 +46,13 @@ class StocksService extends JwtHelper {
     date.take(4).toInt * 10000 + date.slice(5, 7).toInt * 100 + date.slice(8, 10).toInt
 
 
-  def stocksHistory(range: String, id: Long): Future[Responses.PriceHistory] = {
-    log.info(s"begin get price history per share id=$id during the period=$range")
+  def stockPriceHistory(range: String, id: Long): Result[Responses.PriceHistory] = ReaderT { env =>
+    //log.info(s"begin get price history per share id=$id during the period=$range")
     for {
-      stockOption <- stockDao.getStockOption(id)
+      stockOption <- env.stockDao.getStockOption(id)
       stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
       dateFrom = fromDate(range).toString
-      listHistory <- priceHistoryDao.find(id)
+      listHistory <- env.priceHistoryDao.find(id)
       prices = listHistory.filter(h => parse(h.date) < parse(dateFrom)).map(s => Responses.PricePackage(s.date, s.buyPrice))
     } yield Responses.PriceHistory(id, stock.code, stock.name, stock.iconUrl, dateFrom, date.toString, prices)
   }

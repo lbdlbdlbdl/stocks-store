@@ -22,14 +22,15 @@ class StockRoutes extends FailFastCirceSupport {
     import io.circe.generic.auto._
 
     pathPrefix("api" / "stocks") {
-get {
-        path(IntNumber / "history") { (id) =>
+      get {
+        path(IntNumber / "history") { stockId =>
           parameters(
             "range".?
           ).as(RangeHistory) { params =>
-            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
-            onComplete(res) {
-              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
+            complete {
+              for {
+                priceHistory <- env.stocksService.stockPriceHistory(params.range.getOrElse("week"), stockId).run(env)
+              } yield StatusCodes.OK -> priceHistory
             }
           }
         } ~
@@ -38,17 +39,17 @@ get {
             "count".as[Int] ?,
             "itemId".as[Int] ?
           ).as(Requests.PageParameters) { params =>
-          complete {
-            for {
-              stocksPage <- env.stocksService
-                .stocksPage(
-                  params.search.getOrElse(""),
-                  params.count.getOrElse(10),
-                  params.itemId.getOrElse(1))
-                .run(env)
-            } yield StatusCodes.OK -> stocksPage
+            complete {
+              for {
+                stocksPage <- env.stocksService
+                  .stocksPage(
+                    params.search.getOrElse(""),
+                    params.count.getOrElse(10),
+                    params.itemId.getOrElse(1))
+                  .run(env)
+              } yield StatusCodes.OK -> stocksPage
+            }
           }
-        }
       }
     }
   }
