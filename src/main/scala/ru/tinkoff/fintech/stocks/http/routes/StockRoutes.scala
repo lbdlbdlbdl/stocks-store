@@ -10,6 +10,9 @@ import io.circe._
 import io.circe.parser._
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import ru.tinkoff.fintech.stocks.http.dtos.Requests.RangeHistory
+import ru.tinkoff.fintech.stocks.services._
+
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -19,12 +22,22 @@ class StockRoutes extends FailFastCirceSupport {
     import io.circe.generic.auto._
 
     pathPrefix("api" / "stocks") {
-      get {
-        parameters(
-          "search".?,
-          "count".as[Int] ?,
-          "itemId".as[Int] ?
-        ).as(Requests.PageParameters) { params =>
+get {
+        path(IntNumber / "history") { (id) =>
+          parameters(
+            "range".?
+          ).as(RangeHistory) { params =>
+            val res = stocksService.stocksHistory(params.range.getOrElse("week"), id)
+            onComplete(res) {
+              case Success(historyPrice) => complete(StatusCodes.OK, historyPrice)
+            }
+          }
+        } ~
+          parameters(
+            "search".?,
+            "count".as[Int] ?,
+            "itemId".as[Int] ?
+          ).as(Requests.PageParameters) { params =>
           complete {
             for {
               stocksPage <- env.stocksService

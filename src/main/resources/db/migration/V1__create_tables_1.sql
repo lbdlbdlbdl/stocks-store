@@ -21,21 +21,27 @@ create table "Stock" (
 
 create table "StocksPackage" (
 "id" serial primary key,
-"userId" integer not null ,
-"stockId" integer not null ,
+"userId" integer not null references "User"("id"),
+"stockId" integer not null references "Stock"("id"),
 "count" integer  null
 );
 
 create table "TransactionHistory"(
 "id" serial primary key,
-"login" varchar(64) not null unique,
+"login" varchar(64) not null references "User"("login"),
 "stockId" serial not null references "Stock"("id"),
 "amount" integer  not null,
 "totalPrice" float not null,
 "date" varchar(32)   not null,
- "type" varchar(8)   not null)
+ "type" varchar(8)   not null);
 
-
+create table "PriceHistory" (
+"id" serial primary key,
+"stockId" integer not null references "Stock"("id"),
+"date" varchar  not null,
+"salePrice" float not null ,
+"buyPrice" float not null
+)
 -- INSERT INTO "Stock" VALUES (1, "TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);
 -- INSERT INTO "Stock" VALUES (2, "Raiffeisen Bank", "EUR", "icon.jpg", 20.08, 15.97);
 -- INSERT INTO "Stock" VALUES (3, "Sberbank", "RUB", "icon.jpg", 217.08, 150.00);

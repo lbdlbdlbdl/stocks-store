@@ -17,4 +17,5 @@ object Requests {
   //    require(1 <= count.get && count.get <= 50, "count in query must be between 1 and 50")
   //    require(1 <= itemId.get, "itemId must be minimum 1")
 
+  case class RangeHistory(range:Option[String])
 }

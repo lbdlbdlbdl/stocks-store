@@ -33,7 +33,7 @@ object Server extends JwtHelper {
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
     //        flyway.clean()
-    //            flyway.baseline()
+    //        flyway.baseline()
     flyway.migrate()
   }
 
