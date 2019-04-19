@@ -84,9 +84,8 @@ object Server extends JwtHelper {
 
     implicit val stockDao: StockDao = new StockDao()
 
-    def initializeTask(): Unit = {
-      new PriceGenerationTask()
-    }
+    def initializeTask(): Unit = new PriceGenerationTask()
+
 
     initializeTask()
 //        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
