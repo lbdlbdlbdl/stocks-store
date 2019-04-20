@@ -27,7 +27,7 @@ class StocksService extends JwtHelper {
     for {
       stocks <- env.stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
       lastId = stocks.last.id
-    } yield Responses.StocksPage(lastId, itemId, stocks.take(count).map(s => s.as[Responses.Stock]))
+    } yield Responses.StocksPage(lastId, itemId, stocks.take(count).map(s => s.as[Responses.Stock]).reverse)
   }
 
   private def date = LocalDate.now()
@@ -52,11 +52,10 @@ class StocksService extends JwtHelper {
       stockOption <- env.stockDao.getStockOption(id)
       stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
 
-      dateFrom=fromDate(range)
-      listHistory <- priceHistoryDao.find(id)
-      prices=listHistory.filter(_.date.toLocalDate.isAfter(dateFrom)).map(s=>Responses.PricePackage(s.date.toLocalDate,s.buyPrice))
-    } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date,prices)
-
+      dateFrom = fromDate(range)
+      listHistory <- env.priceHistoryDao.find(id)
+      prices = listHistory.filter(_.date.toLocalDate.isAfter(dateFrom)).map(s => Responses.PricePackage(s.date.toLocalDate, s.buyPrice))
+    } yield Responses.PriceHistory(id, stock.code, stock.name, stock.iconUrl, dateFrom, date, prices)
   }
 }
 

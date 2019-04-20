@@ -86,7 +86,7 @@ object Server extends JwtHelper {
       }
     }
 
-    def initializeTask(): Unit = new PriceGenerationTask(newEnv.stockDao)
+    def initializeTask(): Unit = new PriceGenerationTask(newEnv.stockDao, newEnv.priceHistoryDao)
 
     initializeTask()
 

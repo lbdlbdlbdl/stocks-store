@@ -1,5 +1,7 @@
 package ru.tinkoff.fintech.stocks
 
+import java.time.{LocalDate, LocalDateTime}
+
 import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.PriceHistory
@@ -29,7 +31,7 @@ class PriceGenerationTask(stockDao: StockDao,
         val sellPrice = price + priceDifference
         val buyPrice = sellPrice
         stockDao.updatePrices(id, buyPrice, sellPrice)
-        priceHistoryDao.add(PriceHistory(None, id, ???, sellPrice, buyPrice))
+        priceHistoryDao.add(PriceHistory(None, id, LocalDateTime.now(), sellPrice, buyPrice))
       })
     } yield ()
   }

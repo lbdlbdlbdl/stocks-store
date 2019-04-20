@@ -14,21 +14,21 @@ create table "Stock" (
 "name" varchar(64) not null,
 "code" varchar(4) not null,
 "iconUrl" varchar(128),
-"salePrice" float not null , /*цена продажи > (more than)*/
-"buyPrice" float not null /*цена покупки*/
+"salePrice" float not null , /*цена продажи */
+"buyPrice" float not null /*цена покупки > цена продажи*/
 );
 
 
 create table "StocksPackage" (
 "id" serial primary key,
-"userId" integer not null ,
-"stockId" integer not null ,
+"userId" integer not null references "User"("id"),
+"stockId" integer not null references "Stock"("id"),
 "count" integer  null
 );
 
 create table "TransactionHistory"(
 "id" serial primary key,
-"login" varchar(64) not null unique,
+"login" varchar(64) not null references "User"("login"),
 "stockId" serial not null references "Stock"("id"),
 "amount" integer  not null,
 "totalPrice" float not null,
@@ -37,7 +37,7 @@ create table "TransactionHistory"(
 
 create table "PriceHistory" (
 "id" serial primary key,
-"stockId" integer not null ,
+"stockId" integer not null references "Stock"("id"),
 "date" timestamp  not null,
 "salePrice" float not null ,
 "buyPrice" float not null
