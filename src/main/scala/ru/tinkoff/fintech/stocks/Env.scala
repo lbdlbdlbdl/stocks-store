@@ -15,3 +15,5 @@ case class Env(logger: LoggingAdapter,
                stocksPackageDao: StocksPackageDao,
                transactionHistoryDao: TransactionHistoryDao,
                priceHistoryDao: PriceHistoryDao);
+
+               
