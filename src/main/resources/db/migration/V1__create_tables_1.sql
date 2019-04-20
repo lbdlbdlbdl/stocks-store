@@ -14,8 +14,8 @@ create table "Stock" (
 "name" varchar(64) not null,
 "code" varchar(4) not null,
 "iconUrl" varchar(128),
-"salePrice" float not null , /*цена продажи > (more than)*/
-"buyPrice" float not null /*цена покупки*/
+"salePrice" float not null , /*цена продажи */
+"buyPrice" float not null /*цена покупки > цена продажи*/
 );
 
 
@@ -38,7 +38,7 @@ create table "TransactionHistory"(
 create table "PriceHistory" (
 "id" serial primary key,
 "stockId" integer not null references "Stock"("id"),
-"date" varchar  not null,
+"date" timestamp  not null,
 "salePrice" float not null ,
 "buyPrice" float not null
 )
