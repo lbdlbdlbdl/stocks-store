@@ -50,7 +50,7 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
     run(quote {
       query[Stock]
         .drop(lift(offset - 1))
-        .filter(s => s.name like s"%${lift(searchedStr)}%")
+        .filter(s => s.name.toLowerCase like s"%${lift(searchedStr.toLowerCase)}%")
         .take(lift(querySize))
     })
   }

@@ -41,6 +41,12 @@ class StocksService extends JwtHelper {
     case "total" => LocalDate.ofEpochDay(1)
     case _ => throw ValidationException(s"incorrect range=$range")
   }
+//
+//  def compress(list: List[PricePackage]): Unit ={
+//    val step=list.length/100
+//
+//  }
+
 
   private def parse(date: String) =
     date.take(4).toInt * 10000 + date.slice(5, 7).toInt * 100 + date.slice(8, 10).toInt
