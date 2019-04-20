@@ -1,5 +1,7 @@
 package ru.tinkoff.fintech.stocks.http.dtos
 
+import java.time.LocalDate
+
 object Responses {
 
   case class Token(accessToken: String, refreshToken: String)

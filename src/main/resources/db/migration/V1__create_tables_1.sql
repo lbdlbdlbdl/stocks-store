@@ -21,14 +21,14 @@ create table "Stock" (
 
 create table "StocksPackage" (
 "id" serial primary key,
-"userId" integer not null references "User"("id"),
-"stockId" integer not null references "Stock"("id"),
+"userId" integer not null ,
+"stockId" integer not null ,
 "count" integer  null
 );
 
 create table "TransactionHistory"(
 "id" serial primary key,
-"login" varchar(64) not null references "User"("login"),
+"login" varchar(64) not null unique,
 "stockId" serial not null references "Stock"("id"),
 "amount" integer  not null,
 "totalPrice" float not null,
@@ -37,8 +37,8 @@ create table "TransactionHistory"(
 
 create table "PriceHistory" (
 "id" serial primary key,
-"stockId" integer not null references "Stock"("id"),
-"date" varchar  not null,
+"stockId" integer not null ,
+"date" timestamp  not null,
 "salePrice" float not null ,
 "buyPrice" float not null
 )

@@ -47,13 +47,16 @@ class StocksService extends JwtHelper {
 
   def stockPriceHistory(range: String, id: Long): Result[Responses.PriceHistory] = ReaderT { env =>
     env.logger.info(s"begin get price history per share id=$id during the period=$range")
+
     for {
       stockOption <- env.stockDao.getStockOption(id)
       stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
-      dateFrom = fromDate(range).toString
-      listHistory <- env.priceHistoryDao.find(id)
-      prices = listHistory.filter(h => parse(h.date) < parse(dateFrom)).map(s => Responses.PricePackage(s.date, s.buyPrice))
-    } yield Responses.PriceHistory(id, stock.code, stock.name, stock.iconUrl, dateFrom, date.toString, prices)
+
+      dateFrom=fromDate(range)
+      listHistory <- priceHistoryDao.find(id)
+      prices=listHistory.filter(_.date.toLocalDate.isAfter(dateFrom)).map(s=>Responses.PricePackage(s.date.toLocalDate,s.buyPrice))
+    } yield Responses.PriceHistory(id,stock.code,stock.name,stock.iconUrl,dateFrom,date,prices)
+
   }
 }
 
