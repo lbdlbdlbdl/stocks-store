@@ -35,7 +35,7 @@ class TransactionService(val stocksPackageDao: StocksPackageDao,
     } yield Companion(userInfo, package_, stock.get)
 
 
-  def timeNow: String = LocalDateTime.now().toString
+  def timeNow = LocalDateTime.now()
 
   def buyStock(login: String, stockId: Long, amount: Int): Future[Responses.TransactionSuccess] = {
     for {

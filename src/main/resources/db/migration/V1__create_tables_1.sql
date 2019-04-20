@@ -32,7 +32,7 @@ create table "TransactionHistory"(
 "stockId" serial not null references "Stock"("id"),
 "amount" integer  not null,
 "totalPrice" float not null,
-"date" varchar(32)   not null,
+"date" timestamp   not null,
  "type" varchar(8)   not null);
 
 create table "PriceHistory" (
@@ -41,8 +41,10 @@ create table "PriceHistory" (
 "date" timestamp  not null,
 "salePrice" float not null ,
 "buyPrice" float not null
-)
--- INSERT INTO "Stock" VALUES (1, "TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);
--- INSERT INTO "Stock" VALUES (2, "Raiffeisen Bank", "EUR", "icon.jpg", 20.08, 15.97);
--- INSERT INTO "Stock" VALUES (3, "Sberbank", "RUB", "icon.jpg", 217.08, 150.00);
--- INSERT INTO "Stock"(id,  name, code, iconUrl,salePrice,buyPrice) VALUES ("TCS Group (Tinkoff)", "TCS", "icon.jpg", 35.20, 30.00);2
+);
+
+INSERT INTO "Stock"(id,  name, code, "iconUrl","salePrice","buyPrice")
+VALUES (1, 'TCS Group (Tinkoff)', 'TCS', 'icon.jpg', 35.20, 30.00);
+VALUES (2, 'Raiffeisen Bank', 'RBIV', 'icon.jpg', 20.08, 15.97);
+VALUES (3, 'Sberbank', 'SBER', 'icon.jpg', 217.08, 150.00);
+VALUES (4,'TCS Group (Tinkoff)', 'TCS', 'icon.jpg', 35.20, 30.00);

@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, UserDao}
+import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao, StocksPackageDao, UserDao}
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
 import akka.http.scaladsl.server.Directives.logRequest
@@ -26,7 +26,8 @@ class UserRoutes(implicit val exctx: ExecutionContext,
   val userDao = new UserDao()
   val storageDao = new StocksPackageDao()
   val stockDao = new StockDao()
-  val userService = new UserService(userDao, storageDao, stockDao)
+  val priceHistoryDao =new PriceHistoryDao()
+  val userService = new UserService(userDao, storageDao, stockDao, priceHistoryDao)
 
   val authRoutes = {
     import io.circe.generic.auto._

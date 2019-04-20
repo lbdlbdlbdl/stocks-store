@@ -1,7 +1,10 @@
 package ru.tinkoff.fintech.stocks
 
+import java.time.LocalDateTime
+
 import akka.actor.ActorSystem
-import ru.tinkoff.fintech.stocks.dao.StockDao
+import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
+import ru.tinkoff.fintech.stocks.db.PriceHistory
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -9,6 +12,7 @@ import scala.concurrent.duration._
 //Со случайным интервалом сервер генерирует текущие цены для каждого элемента из списка акций.
 class PriceGenerationTask(implicit val actorSystem: ActorSystem,
                           implicit val stockDao: StockDao,
+                          implicit val priceHistory: PriceHistoryDao,
                           implicit val executionContext: ExecutionContext) {
 
   //to config
@@ -25,7 +29,9 @@ class PriceGenerationTask(implicit val actorSystem: ActorSystem,
         val sellPrice = price
         val buyPrice = sellPrice - priceDifference
         stockDao.updatePrices(id, buyPrice, sellPrice)
+        priceHistory.add(PriceHistory(None,id,LocalDateTime.now(),sellPrice,buyPrice))
       })
+
     } yield update
   }
 }

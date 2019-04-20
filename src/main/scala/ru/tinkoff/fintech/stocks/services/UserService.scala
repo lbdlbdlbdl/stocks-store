@@ -12,7 +12,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class UserService(val userDao: UserDao,
                   val stocksPackageDao: StocksPackageDao,
-                  val stockDao: StockDao)
+                  val stockDao: StockDao,
+                  val priceHistoryDao: PriceHistoryDao)
                  (implicit val exctx: ExecutionContext,
                   implicit val system: ActorSystem) extends JwtHelper {
 
@@ -31,7 +32,11 @@ class UserService(val userDao: UserDao,
   }
 
   private def newStockBatchResponse(st: Future[Stock], count: StocksPackage): Future[Responses.StockBatch] =
-    st.map(s => Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, 0, count.count)) //изменить priceDelta
+    for{
+      s<-st
+      lastP<-priceHistoryDao.find(s.id)
+      deltaP= s.buyPrice-lastP.maxBy(_.id).buyPrice
+    }yield Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.buyPrice,deltaP , count.count)
 
   def accountInfo(login: String): Future[Responses.AccountInfo] = {
 

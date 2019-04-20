@@ -1,6 +1,6 @@
 package ru.tinkoff.fintech.stocks.http.dtos
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 object Responses {
 
@@ -33,7 +33,7 @@ object Responses {
   case class TransactionHistory(stock: StockHistory,
                                 amount: Int,
                                 totalPrice: Double,
-                                date: String,
+                                date: LocalDateTime,
                                 `type`: String)
 
   case class TransactionHistoryPage(nextItemId: Long, prevItemId: Long, items: List[TransactionHistory])

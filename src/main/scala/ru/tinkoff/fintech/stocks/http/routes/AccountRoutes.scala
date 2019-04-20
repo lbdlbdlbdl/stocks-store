@@ -20,7 +20,8 @@ class AccountRoutes(implicit val exctx: ExecutionContext,
   val userDao = new UserDao()
   val storageDao = new StocksPackageDao()
   val stockDao = new StockDao()
-  val userService = new UserService(userDao, storageDao, stockDao)
+  val priceHistoryDao =new PriceHistoryDao()
+  val userService = new UserService(userDao, storageDao, stockDao, priceHistoryDao)
 
   val logger = Logging(system, getClass)
 

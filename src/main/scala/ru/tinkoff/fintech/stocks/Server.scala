@@ -15,7 +15,7 @@ import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
-import ru.tinkoff.fintech.stocks.dao.StockDao
+import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.http.routes.{AccountRoutes, StockRoutes, TransactionRoutes, UserRoutes}
 import ru.tinkoff.fintech.stocks.http._
 
@@ -83,7 +83,7 @@ object Server extends JwtHelper {
     }
 
     implicit val stockDao: StockDao = new StockDao()
-
+    implicit val priceHistoryDao: PriceHistoryDao = new PriceHistoryDao()
     def initializeTask(): Unit = new PriceGenerationTask()
 
 

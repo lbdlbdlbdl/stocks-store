@@ -8,6 +8,7 @@ import ru.tinkoff.fintech.stocks.db.Stock
 import ru.tinkoff.fintech.stocks.http.Exceptions.{NotFoundException, ValidationException}
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
+import ru.tinkoff.fintech.stocks.http.dtos.Responses.PricePackage
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,8 +52,12 @@ class StocksService(val stocksPackageDao: StocksPackageDao,
     case "total" => LocalDate.ofEpochDay(1)
     case _ => throw ValidationException(s"incorrect range=$range")
   }
+//
+//  def compress(list: List[PricePackage]): Unit ={
+//    val step=list.length/100
+//
+//  }
 
-  //def parse(date:String)={date.take(4).toInt*10000+date.slice(5, 7).toInt*100+date.slice(8, 10).toInt}
   def stocksHistory(range: String, id: Long): Future[Responses.PriceHistory] = {
     log.info(s"begin get price history per share id=$id during the period=$range")
     for {
