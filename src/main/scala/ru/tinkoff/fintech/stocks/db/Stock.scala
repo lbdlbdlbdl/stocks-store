@@ -20,6 +20,4 @@ object Stock {
   implicit def toStockHistoryResponse: Stock => Responses.StockHistory =
     (stock: Stock) => Responses.StockHistory(stock.id, stock.code, stock.name, stock.iconUrl)
 
-//  implicit def convert[B, A](l: List[A])(implicit f: A => B): List[B] = l map { a => a: B }
-
 }

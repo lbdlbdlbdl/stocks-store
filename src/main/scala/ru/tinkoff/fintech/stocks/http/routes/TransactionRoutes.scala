@@ -17,6 +17,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
 
+
     pathPrefix("api" / "transaction") {
       path("buy") {
         authenticated { claim =>
@@ -47,7 +48,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               }
             }
           }
-        } /*~
+        } ~
         path("history") {
           authenticated { claim =>
             get {
@@ -68,7 +69,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               }
             }
           }
-        } */
+        }
     }
   }
 }

@@ -9,7 +9,7 @@ import cats.data.{Reader, ReaderT}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
-import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,7 +23,7 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
       path("signup") {
         post {
           entity(as[Requests.UserRequest]) { user =>
-//            log.info(s"begin signup, user: $user")
+            env.logger.info(s"begin signup, user: $user")
             complete {
               for {
                 tokens <- env.userService.createUser(user.login, user.password).run(env)
@@ -35,7 +35,7 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
         path("signin") {
           post {
             entity(as[Requests.UserRequest]) { user =>
-//              log.info(s"begin signin, user: $user")
+              env.logger.info(s"begin signin, user: $user")
               complete {
                 for {
                   tokens <- env.userService.authenticate(user.login, user.password).run(env)
@@ -47,7 +47,7 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
         path("refresh") {
           post {
             entity(as[Requests.RefreshToken]) { refreshToken =>
-//              log.info(s"begin refresh token")
+              env.logger.info(s"begin refresh token")
               complete {
                 for {
                   tokens <- env.userService.refreshTokens(refreshToken.refreshToken)

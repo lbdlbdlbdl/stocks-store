@@ -16,10 +16,10 @@ import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
   */
 trait JwtHelper {
 
-  val secretKey = ConfigFactory.load().getString("jwt.secretKey") // = "change-me-please"
-  val accessExpiration = ConfigFactory.load().getInt("jwt.token.access.expirationInSeconds")
-  val refreshExpiration = ConfigFactory.load().getInt("jwt.token.refresh.expirationInSeconds")
-  val algorithm = JwtAlgorithm.HS512
+  private val secretKey = ConfigFactory.load().getString("jwt.secretKey") // = "change-me-please"
+  private val accessExpiration = ConfigFactory.load().getInt("jwt.token.access.expirationInSeconds")
+  private val refreshExpiration = ConfigFactory.load().getInt("jwt.token.refresh.expirationInSeconds")
+  private val algorithm = JwtAlgorithm.HS512
 
   private def generateClaim(authData: Requests.AuthData, expiration: Int): JwtClaim =
     JwtClaim(authData.asJson.toString())
@@ -32,7 +32,7 @@ trait JwtHelper {
       claims
     } else throw UnauthorizedException("Invalid token.")
 
-  def getLoginFromClaim(claim: JwtClaim): String ={
+  def getLoginFromClaim(claim: JwtClaim): String = {
     val loginDoc: Json = parse(claim.content).getOrElse(Json.Null)
     val cursor: HCursor = loginDoc.hcursor
     val login = cursor.downField("login").as[String] match {
@@ -44,7 +44,7 @@ trait JwtHelper {
   def generateToken(authData: Requests.AuthData, expiration: Int): String =
     JwtCirce.encode(generateClaim(authData, expiration), secretKey, algorithm)
 
-  def generateTokens(authData: Requests.AuthData): Responses.Token =
+  def generateTokensResponse(authData: Requests.AuthData): Responses.Token =
     Responses.Token(generateToken(authData, accessExpiration), generateToken(authData, refreshExpiration))
 
   def isValidToken(token: String): Boolean = Jwt.isValid(token, secretKey, Seq(algorithm))
@@ -54,9 +54,9 @@ trait JwtHelper {
   def authenticated: Directive1[JwtClaim] =
     optionalHeaderValueByName("Authorization") flatMap {
       case Some(token) =>
-          decodeToken(token)
-            .map(provide)
-            .getOrElse(throw ExpiredTokenException())
+        decodeToken(token)
+          .map(provide)
+          .getOrElse(throw ExpiredTokenException())
       case _ => throw UnauthorizedException() //если нет в header'e ничего
     }
 

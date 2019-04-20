@@ -62,7 +62,10 @@ object Server extends JwtHelper {
       logRequest(requestMethodAs(Logging.InfoLevel) _)
     }
 
-    val newEnv = Env(new UserService(), new StocksService(), new TransactionService(),
+    //singleton style
+    val newEnv = Env(
+      Logging.getLogger(system, this),
+      new UserService(), new StocksService(), new TransactionService(),
       new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao(), new PriceHistoryDao())
 
     val allRoutes = {
@@ -84,6 +87,7 @@ object Server extends JwtHelper {
     }
 
     def initializeTask(): Unit = new PriceGenerationTask(newEnv.stockDao)
+
     initializeTask()
 
     //    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
