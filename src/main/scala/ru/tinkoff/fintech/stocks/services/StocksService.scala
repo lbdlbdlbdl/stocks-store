@@ -2,13 +2,12 @@ package ru.tinkoff.fintech.stocks.services
 
 import java.time.LocalDate
 
-import akka.actor.ActorSystem
-import cats.data.{Reader, ReaderT}
-import ru.tinkoff.fintech.stocks.Env
+import cats.data.ReaderT
 import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
+import ru.tinkoff.fintech.stocks.http.dtos.Responses.PricePackage
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,17 +15,13 @@ import scala.concurrent.Future
 
 class StocksService extends JwtHelper {
 
-  /*
-  def priceDelta(stock:Stock):Reader[Env, Double] = Reader { env =>
-    val secondLastPrice = env.priceHistoryDao.find(stock.id).map { case _ :: p :: _ :: Nil => p }
-  }
-  */
-
   private def newStockBatch(stock: Future[Stock], count: Int): Result[Responses.StockBatch] = ReaderT { env =>
     for { //TODO: transaction
       s <- stock
       prices <- env.priceHistoryDao.find(s.id)
-      secondLastPrice = prices match { case _ :: p :: _ :: Nil => p }
+      secondLastPrice = prices match {
+        case _ :: p :: _ :: Nil => p
+      }
       deltaPrice = s.buyPrice - secondLastPrice.buyPrice
     } yield Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
   }
@@ -55,15 +50,23 @@ class StocksService extends JwtHelper {
     case _ => throw ValidationException(s"incorrect range=$range")
   }
 
-  //
-  //  def compress(list: List[PricePackage]): Unit ={
-  //    val step=list.length/100
-  //
-  //  }
+  def compress(list: List[PricePackage]): List[PricePackage] = {
+    val step = list.length / 10
 
+    def averaged(t: List[PricePackage]): PricePackage = {
+      val price = t.map(_.price).sum / t.length
+      val date = LocalDate.ofEpochDay(t.map(_.date.toEpochDay).sum / t.length)
+      PricePackage(date, price)
+    }
 
-  private def parse(date: String) =
-    date.take(4).toInt * 10000 + date.slice(5, 7).toInt * 100 + date.slice(8, 10).toInt
+    def recTail(t: List[PricePackage], acc: List[PricePackage]): List[PricePackage] = t.length match {
+      case v if v >= step => recTail(t.drop(step), acc :+ averaged(t.take(step)))
+      case _ => acc :+ averaged(t)
+    }
+
+    recTail(list, List.empty[PricePackage])
+
+  }
 
   def stockPriceHistory(range: String, id: Long): Result[Responses.PriceHistory] = ReaderT { env =>
     env.logger.info(s"begin get price history per share id=$id during the period=$range")
@@ -73,9 +76,9 @@ class StocksService extends JwtHelper {
 
       dateFrom = fromDate(range)
       listHistory <- env.priceHistoryDao.find(id)
-      prices = listHistory
+      prices = compress(listHistory
         .filter(_.date.toLocalDate.isAfter(dateFrom))
-        .map(pHis => Responses.PricePackage(pHis.date.toLocalDate, pHis.buyPrice))
+        .map(pHis => Responses.PricePackage(pHis.date.toLocalDate, pHis.buyPrice)))
     } yield Responses.PriceHistory(id, stock.code, stock.name, stock.iconUrl, dateFrom, date, prices)
   }
 }
