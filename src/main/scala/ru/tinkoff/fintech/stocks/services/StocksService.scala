@@ -7,7 +7,7 @@ import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
-import ru.tinkoff.fintech.stocks.http.dtos.Responses.PricePackage
+import ru.tinkoff.fintech.stocks.http.dtos.Responses.{PriceHistory, PricePackage}
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -19,8 +19,8 @@ class StocksService extends JwtHelper {
     for { //TODO: transaction
       s <- stock
       prices <- env.priceHistoryDao.find(s.id)
-      secondLastPrice = prices match {
-        case _ :: p :: _ :: Nil => p
+      secondLastPrice = prices.reverse match {
+        case _ :: p :: _ => p
       }
       deltaPrice = s.buyPrice - secondLastPrice.buyPrice
     } yield Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
@@ -51,17 +51,18 @@ class StocksService extends JwtHelper {
   }
 
   def compress(list: List[PricePackage]): List[PricePackage] = {
-    val step = list.length / 10
+    val step = list.length /20 + 1
 
     def averaged(t: List[PricePackage]): PricePackage = {
-      val price = t.map(_.price).sum / t.length
-      val date = LocalDate.ofEpochDay(t.map(_.date.toEpochDay).sum / t.length)
+      val p = println(step)
+      val price = t.map(_.price).sum / step
+      val date = LocalDate.ofEpochDay(t.map(_.date.toEpochDay).sum / step)
       PricePackage(date, price)
     }
 
     def recTail(t: List[PricePackage], acc: List[PricePackage]): List[PricePackage] = t.length match {
       case v if v >= step => recTail(t.drop(step), acc :+ averaged(t.take(step)))
-      case _ => acc :+ averaged(t)
+      case _ => acc ++ t
     }
 
     recTail(list, List.empty[PricePackage])

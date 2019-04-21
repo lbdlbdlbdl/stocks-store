@@ -61,6 +61,7 @@ class UserService extends JwtHelper { //кусочек ооп
       user = maybeUser.getOrElse(throw NotFoundException("User not found."))
       stocksPackage <- env.stocksPackageDao.find(user.id.get)
       stockBatches <- env.stocksService.stockPackages2StockBatches(stocksPackage).run(env)
+      f = println(stockBatches)
     } yield Responses.AccountInfo(login, user.balance, stockBatches)
   }
 
