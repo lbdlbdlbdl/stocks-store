@@ -29,7 +29,7 @@ class TransactionService extends JwtHelper {
     } yield Companion(userInfo, package_, stock)
   }
 
-  private def timeNow: String = LocalDateTime.now().toString
+  private def timeNow = LocalDateTime.now()
 
   def buyStock(login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
     for {
