@@ -1,18 +1,16 @@
 package ru.tinkoff.fintech.stocks.services
 
-import akka.actor.ActorSystem
-import cats.data.{Reader, ReaderT}
+import java.time.LocalDateTime
+
+import cats.data.ReaderT
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
-
-import scala.concurrent.{ExecutionContext, Future}
-import java.time.LocalDateTime
-
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Success
 
 case class Companion(user: User, packag: Option[StocksPackage], stock: Stock)
@@ -54,13 +52,15 @@ class TransactionService extends JwtHelper {
   def saleStock(login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
-      _<- cmp.packag match {
+      _ <- cmp.packag match {
         case Some(value) =>
           if (amount > value.count) throw ValidationException("Not enough shares in the account")
-          else  env.stocksPackageDao.updatePackage(stockId, value.count - amount) andThen {case _=>
+          else env.stocksPackageDao.updatePackage(stockId, value.count - amount
+          ) andThen { case Success(value) =>
             val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
             env.logger.info(s"update user $login new balanace $newBalance")
-            env.userDao.updateBalance(login, newBalance)} andThen{ case _=>
+            env.userDao.updateBalance(login, newBalance)
+          } andThen { case _ =>
             env.transactionHistoryDao.add(
               TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
           }
