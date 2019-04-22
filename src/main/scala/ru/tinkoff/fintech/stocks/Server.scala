@@ -90,8 +90,8 @@ object Server extends JwtHelper {
 
     initializeTask()
 
-        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+//        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }

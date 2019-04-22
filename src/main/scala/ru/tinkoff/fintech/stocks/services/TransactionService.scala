@@ -60,6 +60,7 @@ class TransactionService extends JwtHelper {
         case None => throw ValidationException("Not enough shares in the account")
       }
       sellStock <- {
+        val test = removeStockPackage
         val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
         env.logger.info(s"update user $login new balanace $newBalance")
         env.userDao.updateBalance(login, newBalance)
