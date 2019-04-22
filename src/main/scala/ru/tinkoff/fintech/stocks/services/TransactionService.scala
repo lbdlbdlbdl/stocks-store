@@ -13,6 +13,7 @@ import java.time.LocalDateTime
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 case class Companion(user: User, packag: Option[StocksPackage], stock: Stock)
 
@@ -53,20 +54,18 @@ class TransactionService extends JwtHelper {
   def saleStock(login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
-      removeStockPackage <- cmp.packag match {
+      _<- cmp.packag match {
         case Some(value) =>
           if (amount > value.count) throw ValidationException("Not enough shares in the account")
-          else env.stocksPackageDao.updatePackage(stockId, value.count - amount)
+          else  env.stocksPackageDao.updatePackage(stockId, value.count - amount) andThen {case _=>
+            val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
+            env.logger.info(s"update user $login new balanace $newBalance")
+            env.userDao.updateBalance(login, newBalance)} andThen{ case _=>
+            env.transactionHistoryDao.add(
+              TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
+          }
         case None => throw ValidationException("Not enough shares in the account")
       }
-      sellStock <- {
-        val test = removeStockPackage
-        val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
-        env.logger.info(s"update user $login new balanace $newBalance")
-        env.userDao.updateBalance(login, newBalance)
-      }
-      history <- env.transactionHistoryDao.add(
-        TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
     } yield Responses.TransactionSuccess()
   }
 
