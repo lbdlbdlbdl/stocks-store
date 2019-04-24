@@ -34,12 +34,10 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(newId => stocksPack.copy(id = newId))
   }
 
-  def updatePackage(id: Long, newCount:Int): Future[Unit] = {
-    Future {
+  def updatePackage(idUser:Long,id: Long, newCount:Int): Future[Long] = {
       log.info(s"update package id=$id new count=$newCount")
       run(quote {
-        query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
+        query[StocksPackage].filter(env=>env.stockId == lift(id) && env.userId==lift(idUser)).update(_.count -> lift(newCount))
       })
-    }
   }
 }

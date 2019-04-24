@@ -41,7 +41,7 @@ class TransactionService extends JwtHelper {
           env.userDao.updateBalance(login, newBalance)
         }
       addStockPackage <- cmp.packag match {
-        case Some(value) => env.stocksPackageDao.updatePackage(stockId, value.count + amount)
+        case Some(value) => env.stocksPackageDao.updatePackage(cmp.user.id.get,stockId, value.count + amount)
         case None => env.stocksPackageDao.add(StocksPackage(None, cmp.user.id.get, stockId, amount))
       }
       history <- env.transactionHistoryDao.add(
@@ -55,7 +55,7 @@ class TransactionService extends JwtHelper {
       _ <- cmp.packag match {
         case Some(value) =>
           if (amount > value.count) throw ValidationException("Not enough shares in the account")
-          else env.stocksPackageDao.updatePackage(stockId, value.count - amount
+          else env.stocksPackageDao.updatePackage(cmp.user.id.get,stockId, value.count - amount
           ) andThen { case Success(value) =>
             val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
             env.logger.info(s"update user $login new balanace $newBalance")
