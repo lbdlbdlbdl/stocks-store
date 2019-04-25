@@ -1,7 +1,8 @@
 package ru.tinkoff.fintech.stocks.services
 
-import akka.actor.ActorSystem
-import cats.data.{Reader, ReaderT}
+import java.time.LocalDateTime
+
+import cats.data.ReaderT
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
@@ -55,20 +56,22 @@ class TransactionService {
   def saleStock(login: String, stockId: Long, amount: Int): Result[TransactionSuccess] = ReaderT { env =>
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
-      removeStockPackage <- cmp.pack match {
+      _ <- cmp.pack match {
         case Some(value) =>
           if (amount > value.count) throw ValidationException("Not enough shares in the account")
-          else env.stocksPackageDao.updatePackage(stockId, value.count - amount)
+          else env.stocksPackageDao.updatePackage(stockId, value.count - amount
+          ) andThen { case Success(value) =>
+            val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
+            env.logger.info(s"update user $login new balanace $newBalance")
+            env.userDao.updateBalance(login, newBalance)
+          } andThen { case _ =>
+            env.transactionHistoryDao.add(
+              TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
+          }
         case None => throw ValidationException("Not enough shares in the account")
       }
-      sellStock <- {
-        val newBalance = cmp.user.balance + cmp.stock.salePrice * amount
-        env.logger.info(s"update user $login new balanace $newBalance")
-        env.userDao.updateBalance(login, newBalance)
-      }
-      history <- env.transactionHistoryDao.add(
-        TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
-    } yield TransactionSuccess()
+
+    } yield Responses.TransactionSuccess()
   }
 
   def transactionHistory2Response(value: TransactionHistory): Result[TransactionHistoryResponse] = ReaderT { env =>

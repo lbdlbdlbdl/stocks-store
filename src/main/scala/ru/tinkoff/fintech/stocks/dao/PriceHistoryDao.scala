@@ -17,12 +17,6 @@ class PriceHistoryDao {
     })
   }
 
-  //  def findLast(idStock:Long):Future[PriceHistory] = {
-  //    run(quote {
-  //      query[PriceHistory].filter(_.stockId == lift(idStock)).sortB
-  //    })
-  //  }
-
   def add(history: PriceHistory): Future[Unit] = {
     run(quote {
       query[PriceHistory].insert(lift(history)).returning(_.id)

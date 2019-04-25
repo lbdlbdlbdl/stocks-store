@@ -19,18 +19,20 @@ import JwtHelper._
 
 class StocksService {
 
+
   /*
   def priceDelta(stock:Stock):Reader[Env, Double] = Reader { env =>
     val secondLastPrice = env.priceHistoryDao.find(stock.id).map { case _ :: p :: _ :: Nil => p }
   }
   */
 
-  private def newStockBatch(stock: Future[Stock], count: Int): Result[StockBatch] = ReaderT { env =>
+  private def newStockBatch(stock: Future[Stock], count: Int): Result[Responses.StockBatch] = ReaderT { env =>
     for { //TODO: transaction
       s <- stock
       prices <- env.priceHistoryDao.find(s.id)
-      secondLastPrice = prices match {
-        case _ :: p :: _ :: Nil => p
+      secondLastPrice = prices.reverse match {
+        case _ :: p :: _ => p
+
       }
       deltaPrice = s.buyPrice - secondLastPrice.buyPrice
     } yield StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
@@ -61,8 +63,29 @@ class StocksService {
     case _ => throw ValidationException(s"incorrect range=$range")
   }
 
+
   private def parse(date: String) =
     date.take(4).toInt * 10000 + date.slice(5, 7).toInt * 100 + date.slice(8, 10).toInt
+
+  def compress(list: List[PricePackage]): List[PricePackage] = {
+    val step = list.length /20 + 1
+
+    def averaged(t: List[PricePackage]): PricePackage = {
+      val p = println(step)
+      val price = t.map(_.price).sum / step
+      val date = LocalDate.ofEpochDay(t.map(_.date.toEpochDay).sum / step)
+      PricePackage(date, price)
+    }
+
+    def recTail(t: List[PricePackage], acc: List[PricePackage]): List[PricePackage] = t.length match {
+      case v if v >= step => recTail(t.drop(step), acc :+ averaged(t.take(step)))
+      case _ => acc ++ t
+    }
+
+    recTail(list, List.empty[PricePackage])
+
+  }
+>>>>>>> refactorDM
 
   def stockPriceHistory(range: String, id: Long): Result[PriceHistoryResponse] = ReaderT { env =>
     env.logger.info(s"begin get price history per share id=$id during the period=$range")
@@ -72,10 +95,11 @@ class StocksService {
 
       dateFrom = fromDate(range)
       listHistory <- env.priceHistoryDao.find(id)
-      prices = listHistory
+      prices = compress(listHistory
         .filter(_.date.toLocalDate.isAfter(dateFrom))
         .map(pHis => PricePackage(pHis.date.toLocalDate, pHis.buyPrice))
     } yield PriceHistoryResponse(id, stock.code, stock.name, stock.iconUrl, dateFrom, date, prices)
+
   }
 }
 
