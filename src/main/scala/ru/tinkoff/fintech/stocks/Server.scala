@@ -47,6 +47,8 @@ object Server extends JwtHelper {
 
     implicit val quillContext: PostgresAsyncContext[Escape] =
       new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
+
+
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()

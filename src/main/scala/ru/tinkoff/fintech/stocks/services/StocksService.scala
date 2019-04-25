@@ -9,12 +9,15 @@ import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
+import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StocksService extends JwtHelper {
+import JwtHelper._
+
+class StocksService {
 
   /*
   def priceDelta(stock:Stock):Reader[Env, Double] = Reader { env =>
@@ -22,25 +25,28 @@ class StocksService extends JwtHelper {
   }
   */
 
-  private def newStockBatch(stock: Future[Stock], count: Int): Result[Responses.StockBatch] = ReaderT { env =>
+  private def newStockBatch(stock: Future[Stock], count: Int): Result[StockBatch] = ReaderT { env =>
     for { //TODO: transaction
       s <- stock
       prices <- env.priceHistoryDao.find(s.id)
-      secondLastPrice = prices match { case _ :: p :: _ :: Nil => p }
+      secondLastPrice = prices match {
+        case _ :: p :: _ :: Nil => p
+      }
       deltaPrice = s.buyPrice - secondLastPrice.buyPrice
-    } yield Responses.StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
+    } yield StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
   }
 
-  def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Result[List[Responses.StockBatch]] = ReaderT { env =>
+  def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Result[List[StockBatch]] = ReaderT { env =>
     Future.sequence(stocksPackages.map(sp => newStockBatch(env.stockDao.getStock(sp.stockId), sp.count).run(env)))
   }
 
-  def stocksPage(searchStr: String, count: Int, itemId: Int): Result[Responses.StocksPage] = ReaderT { env =>
+  def stocksPage(searchStr: String, count: Int, itemId: Int): Result[StocksPage] = ReaderT { env =>
     env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       stocks <- env.stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
       lastId = stocks.last.id
-    } yield Responses.StocksPage(lastId, itemId, stocks.take(count).map(s => s.as[Responses.Stock]).reverse)
+    } yield StocksPage(lastId, itemId,
+      stocks.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)).reverse)
   }
 
   private def date = LocalDate.now()
@@ -55,17 +61,10 @@ class StocksService extends JwtHelper {
     case _ => throw ValidationException(s"incorrect range=$range")
   }
 
-  //
-  //  def compress(list: List[PricePackage]): Unit ={
-  //    val step=list.length/100
-  //
-  //  }
-
-
   private def parse(date: String) =
     date.take(4).toInt * 10000 + date.slice(5, 7).toInt * 100 + date.slice(8, 10).toInt
 
-  def stockPriceHistory(range: String, id: Long): Result[Responses.PriceHistory] = ReaderT { env =>
+  def stockPriceHistory(range: String, id: Long): Result[PriceHistoryResponse] = ReaderT { env =>
     env.logger.info(s"begin get price history per share id=$id during the period=$range")
     for {
       stockOption <- env.stockDao.getStockOption(id)
@@ -75,8 +74,8 @@ class StocksService extends JwtHelper {
       listHistory <- env.priceHistoryDao.find(id)
       prices = listHistory
         .filter(_.date.toLocalDate.isAfter(dateFrom))
-        .map(pHis => Responses.PricePackage(pHis.date.toLocalDate, pHis.buyPrice))
-    } yield Responses.PriceHistory(id, stock.code, stock.name, stock.iconUrl, dateFrom, date, prices)
+        .map(pHis => PricePackage(pHis.date.toLocalDate, pHis.buyPrice))
+    } yield PriceHistoryResponse(id, stock.code, stock.name, stock.iconUrl, dateFrom, date, prices)
   }
 }
 

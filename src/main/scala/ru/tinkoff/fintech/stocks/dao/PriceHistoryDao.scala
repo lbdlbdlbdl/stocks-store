@@ -4,24 +4,24 @@ import akka.actor.ActorSystem
 import io.getquill.{Escape, PostgresAsyncContext}
 import ru.tinkoff.fintech.stocks.db.PriceHistory
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class PriceHistoryDao(implicit val context: PostgresAsyncContext[Escape],
-                      implicit val exctx: ExecutionContext,
-                      implicit val system: ActorSystem) {
+class PriceHistoryDao {
 
-  import context._
+  import quillContext._
 
-  def find(idStock:Long):Future[List[PriceHistory]] = {
+  def find(idStock: Long): Future[List[PriceHistory]] = {
     run(quote {
       query[PriceHistory].filter(_.stockId == lift(idStock))
     })
   }
-//  def findLast(idStock:Long):Future[PriceHistory] = {
-//    run(quote {
-//      query[PriceHistory].filter(_.stockId == lift(idStock)).sortB
-//    })
-//  }
+
+  //  def findLast(idStock:Long):Future[PriceHistory] = {
+  //    run(quote {
+  //      query[PriceHistory].filter(_.stockId == lift(idStock)).sortB
+  //    })
+  //  }
 
   def add(history: PriceHistory): Future[Unit] = {
     run(quote {

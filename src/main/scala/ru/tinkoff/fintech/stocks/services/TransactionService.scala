@@ -4,19 +4,21 @@ import akka.actor.ActorSystem
 import cats.data.{Reader, ReaderT}
 import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
-import ru.tinkoff.fintech.stocks.http.JwtHelper
-import ru.tinkoff.fintech.stocks.http.dtos.Responses
+import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.LocalDateTime
 
+import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class Companion(user: User, packag: Option[StocksPackage], stock: Stock)
+import JwtHelper._
 
-class TransactionService extends JwtHelper {
+case class Companion(user: User, pack: Option[StocksPackage], stock: Stock)
+
+class TransactionService {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
   def companion(login: String, stockId: Long, amount: Int): Result[Companion] = ReaderT { env =>
@@ -25,13 +27,13 @@ class TransactionService extends JwtHelper {
       userInfo = maybeUser.getOrElse(throw NotFoundException("User not found."))
       maybeStock <- env.stockDao.getStockOption(stockId)
       stock = maybeStock.getOrElse(throw NotFoundException(s"Stock not found id=$stockId."))
-      package_ <- env.stocksPackageDao.findByStock(userInfo.id.get, stockId)
-    } yield Companion(userInfo, package_, stock)
+      pack <- env.stocksPackageDao.findByStock(userInfo.id.get, stockId)
+    } yield Companion(userInfo, pack, stock)
   }
 
   private def timeNow = LocalDateTime.now()
 
-  def buyStock(login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
+  def buyStock(login: String, stockId: Long, amount: Int): Result[TransactionSuccess] = ReaderT { env =>
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
       buyStock <-
@@ -41,19 +43,19 @@ class TransactionService extends JwtHelper {
           env.logger.info(s"update user $login new balance $newBalance")
           env.userDao.updateBalance(login, newBalance)
         }
-      addStockPackage <- cmp.packag match {
+      addStockPackage <- cmp.pack match {
         case Some(value) => env.stocksPackageDao.updatePackage(stockId, value.count + amount)
         case None => env.stocksPackageDao.add(StocksPackage(None, cmp.user.id.get, stockId, amount))
       }
       history <- env.transactionHistoryDao.add(
         TransactionHistory(None, login, stockId, amount, cmp.stock.buyPrice * amount, timeNow, "buy"))
-    } yield Responses.TransactionSuccess()
+    } yield TransactionSuccess()
   }
 
-  def saleStock(login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
+  def saleStock(login: String, stockId: Long, amount: Int): Result[TransactionSuccess] = ReaderT { env =>
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
-      removeStockPackage <- cmp.packag match {
+      removeStockPackage <- cmp.pack match {
         case Some(value) =>
           if (amount > value.count) throw ValidationException("Not enough shares in the account")
           else env.stocksPackageDao.updatePackage(stockId, value.count - amount)
@@ -66,22 +68,24 @@ class TransactionService extends JwtHelper {
       }
       history <- env.transactionHistoryDao.add(
         TransactionHistory(None, login, stockId, amount, cmp.stock.salePrice * amount, timeNow, "sell"))
-    } yield Responses.TransactionSuccess()
+    } yield TransactionSuccess()
   }
 
-  def transactionHistory2Response(value: TransactionHistory): Result[Responses.TransactionHistory] = ReaderT { env =>
+  def transactionHistory2Response(value: TransactionHistory): Result[TransactionHistoryResponse] = ReaderT { env =>
     for {
       stock <- env.stockDao.getStock(value.stockId)
-    } yield Responses.TransactionHistory(stock.as[Responses.StockHistory], value.amount, value.totalPrice, value.date, value.`type`)
+    } yield TransactionHistoryResponse(
+      StockHistory(stock.id, stock.code, stock.name, stock.iconUrl),
+      value.amount, value.totalPrice, value.date, value.`type`)
   }
 
-  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[TransactionHistoryPage] = ReaderT { env =>
     env.logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       tHises <- env.transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
       responses <- Future.sequence(tHises.map(th => transactionHistory2Response(th).run(env)))
       lastId = tHises.last.id
-    } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
+    } yield TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
   }
 
 }

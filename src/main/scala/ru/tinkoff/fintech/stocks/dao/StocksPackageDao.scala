@@ -4,16 +4,12 @@ import akka.actor.ActorSystem
 import io.getquill.{Escape, PostgresAsyncContext}
 import ru.tinkoff.fintech.stocks.db.StocksPackage
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
-                       implicit val exctx: ExecutionContext,
-                       implicit val system: ActorSystem) {
+class StocksPackageDao{
 
-  import akka.event.Logging
-  import context._
-
-  val log = Logging.getLogger(system, this)
+  import quillContext._
 
   def find(userId: Long): Future[List[StocksPackage]] = {
     run(quote {
@@ -28,18 +24,15 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
   }
 
   def add(stocksPack: StocksPackage): Future[StocksPackage] = {
-    log.info("start add stockspackage")
     run(quote {
       query[StocksPackage].insert(lift(stocksPack)).returning(_.id)
     }).map(newId => stocksPack.copy(id = newId))
   }
 
   def updatePackage(id: Long, newCount:Int): Future[Unit] = {
-    Future {
-      log.info(s"update package id=$id new count=$newCount")
       run(quote {
         query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
-      })
-    }
+      }).map(_ => ())
   }
+
 }
