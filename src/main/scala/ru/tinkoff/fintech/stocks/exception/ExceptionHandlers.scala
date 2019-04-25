@@ -13,7 +13,7 @@ object ExceptionHandlers extends FailFastCirceSupport {
   final case class ErrorBody(statusCode: String, message: String)
 
   private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
-    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage} ${exception.getStackTrace()}")
+    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage} ${exception.getStackTrace}")
     extractUri { uri => complete(statusCode, body) }
   }
 
