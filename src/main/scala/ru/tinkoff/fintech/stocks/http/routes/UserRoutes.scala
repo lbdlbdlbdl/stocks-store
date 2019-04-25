@@ -13,8 +13,9 @@ import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import JwtHelper._
 
-class UserRoutes extends FailFastCirceSupport with JwtHelper {
+class UserRoutes extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -23,10 +24,10 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
       path("signup") {
         post {
           entity(as[Requests.UserRequest]) { user =>
-            env.logger.info(s"begin signup, user: $user")
+//            env.logger.info(s"begin signup, user: $user")
             complete {
               for {
-                tokens <- env.userService.createUser(user.login, user.password).run(env)
+                tokens <- env.userService.createUser(user.login, user.password)
               } yield StatusCodes.OK -> tokens
             }
           }
@@ -35,10 +36,10 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
         path("signin") {
           post {
             entity(as[Requests.UserRequest]) { user =>
-              env.logger.info(s"begin signin, user: $user")
+//              env.logger.info(s"begin signin, user: $user")
               complete {
                 for {
-                  tokens <- env.userService.authenticate(user.login, user.password).run(env)
+                  tokens <- env.userService.authenticate(user.login, user.password)
                 } yield StatusCodes.OK -> tokens
               }
             }
@@ -47,7 +48,7 @@ class UserRoutes extends FailFastCirceSupport with JwtHelper {
         path("refresh") {
           post {
             entity(as[Requests.RefreshToken]) { refreshToken =>
-              env.logger.info(s"begin refresh token")
+//              env.logger.info(s"begin refresh token")
               complete {
                 for {
                   tokens <- env.userService.refreshTokens(refreshToken.refreshToken)

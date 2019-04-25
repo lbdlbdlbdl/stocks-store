@@ -2,71 +2,71 @@ package ru.tinkoff.fintech.stocks.services
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-import cats.data.{Reader, ReaderT}
-import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage, User, _}
+import ru.tinkoff.fintech.stocks.db.models._
+//{Stock, StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests._
 import ru.tinkoff.fintech.stocks.result.Result
-
 import JwtHelper._
+import ru.tinkoff.fintech.stocks.Env
+import ru.tinkoff.fintech.stocks.dao.{StocksPackageDao, UserDao}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class UserService { //кусочек ооп
-
+class UserService(stocksService: StocksService)
+                 (implicit val userDao: UserDao,
+                  val stocksPackageDao: StocksPackageDao) {
 
   private def newUser(login: String, password: String): User =
     User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub
 
-  private def addStocksForNewUser(user: User): Result[Unit] = ReaderT { env =>
+  private def addStocksForNewUser(user: User): Future[Unit] =
     for {
-      _ <- env.stocksPackageDao.add(StocksPackage(None, user.id.get, 1, 4))
-      _ <- env.stocksPackageDao.add(StocksPackage(None, user.id.get, 2, 2))
+      _ <- stocksPackageDao.add(StocksPackage(None, user.id.get, 1, 4))
+      _ <- stocksPackageDao.add(StocksPackage(None, user.id.get, 2, 2))
     } yield ()
-  }
 
   private def getTokensForUser(user: User): Token = generateTokensResponse(AuthData(user.login))
 
-  def createUser(login: String, password: String): Result[Token] = ReaderT { env =>
+  def createUser(login: String, password: String): Future[Token] =
     for {
-      maybeUser <- env.userDao.find(login)
+      maybeUser <- userDao.find(login)
       user <-
         if (maybeUser.isDefined) throw ValidationException("User already exists.")
-        else env.userDao.add(newUser(login, password))
-      _ <- addStocksForNewUser(user).run(env)
+        else userDao.add(newUser(login, password))
+      _ <- addStocksForNewUser(user)
       tokens = getTokensForUser(user)
     } yield tokens
-  }
 
-  def authenticate(login: String, providedPassword: String): Result[Token] = ReaderT { env =>
+
+  def authenticate(login: String, providedPassword: String): Future[Token] =
     for {
-      maybeUser <- env.userDao.find(login)
-      user <- maybeUser.filter(user => user.passwordHash == User.dummyHash(providedPassword)) match {
-        case Some(user) => user
-        case _ => throw UnauthorizedException("Username and password combination not found.")
+      maybeUser <- userDao.find(login)
+      maybeValidUser = maybeUser.filter(user => user.passwordHash == User.dummyHash(providedPassword))
+      user <- maybeValidUser match {
+        case Some(user) => Future.successful(user)
+        case _ => Future.failed(UnauthorizedException("Username and password combination not found."))
       }
     } yield getTokensForUser(user)
-  }
 
-  def refreshTokens(refreshToken: String): Future[Token] = {
+
+  def refreshTokens(refreshToken: String): Future[Token] =
     Future {
       if (!isValidToken(refreshToken))
         throw UnauthorizedException("Refresh token is invalid, please log in.")
       generateTokensResponse(AuthData(getLoginFromClaim(getClaim(refreshToken))))
     }
-  }
 
-  def accountInfo(login: String): Result[AccountInfo] = ReaderT {
-    env =>
-      for {
-        maybeUser <- env.userDao.find(login)
-        user = maybeUser.getOrElse(throw NotFoundException("User not found."))
-        stocksPackage <- env.stocksPackageDao.find(user.id.get)
-        stockBatches <- env.stocksService.stockPackages2StockBatches(stocksPackage).run(env)
-      } yield AccountInfo(login, user.balance, stockBatches)
-  }
+  def accountInfo(login: String): Future[AccountInfo] =
+    for {
+      maybeUser <- userDao.find(login)
+      user = maybeUser.getOrElse(throw NotFoundException("User not found."))
+      stocksPackage <- stocksPackageDao.find(user.id.get)
+      stockBatches <- stocksService.stockPackages2StockBatches(stocksPackage)
+    } yield AccountInfo(login, user.balance, stockBatches)
+
 
 }

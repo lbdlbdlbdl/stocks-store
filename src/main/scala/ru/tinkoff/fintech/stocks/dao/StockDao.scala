@@ -1,6 +1,6 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import ru.tinkoff.fintech.stocks.db.Stock
+import ru.tinkoff.fintech.stocks.db.models.Stock
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

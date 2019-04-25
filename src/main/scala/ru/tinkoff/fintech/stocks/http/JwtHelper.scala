@@ -1,7 +1,5 @@
 package ru.tinkoff.fintech.stocks.http
 
-import akka.http.scaladsl.server.Directive1
-import akka.http.scaladsl.server.Directives.{optionalHeaderValueByName, provide}
 import com.typesafe.config.ConfigFactory
 import io.circe.parser._
 import io.circe._

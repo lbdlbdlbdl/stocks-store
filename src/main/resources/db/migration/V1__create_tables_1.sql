@@ -4,9 +4,10 @@ create table "User" (
     "passwordHash"       varchar(128)  not null,
     "salt"               varchar(128)  not null,
     "iconUrl"  varchar(128),
-    "balance" float not null,
+    "balance" double not null,
 
-    check("login" ~ '^[a-z|A-Z|\d|_]')
+    check("login" ~ '^[a-z|A-Z|\d|_]'),
+    check ("balance" >= 0)
 );
 
 create table "Stock" (
@@ -14,37 +15,38 @@ create table "Stock" (
 "name" varchar(64) not null,
 "code" varchar(4) not null,
 "iconUrl" varchar(128),
-"salePrice" float not null , /*цена продажи */
-"buyPrice" float not null /*цена покупки > цена продажи*/
-);
+"salePrice" double not null , /*цена продажи */
+"buyPrice" double not null /*цена покупки > цена продажи*/,
 
+check ("salePrice">0, "buyPrice" >0)
+);
 
 create table "StocksPackage" (
 "id" serial primary key,
 "userId" integer not null references "User"("id"),
 "stockId" integer not null references "Stock"("id"),
-"count" integer  null
+"count" integer not null,
+
+check ("count" > 0)
 );
 
 create table "TransactionHistory"(
 "id" serial primary key,
 "login" varchar(64) not null references "User"("login"),
-"stockId" serial not null references "Stock"("id"),
+"stockId" not null references "Stock"("id"),
 "amount" integer  not null,
-"totalPrice" float not null,
+"totalPrice" double not null,
 "date" timestamp   not null,
- "type" varchar(8)   not null);
+ "type" varchar(8)   not null),
+
+ check ("amount" > 0);
 
 create table "PriceHistory" (
 "id" serial primary key,
 "stockId" integer not null references "Stock"("id"),
 "date" timestamp  not null,
-"salePrice" float not null ,
-"buyPrice" float not null
-);
+"salePrice" double not null ,
+"buyPrice" double not null,
 
-INSERT INTO "Stock"(id,  name, code, "iconUrl","salePrice","buyPrice")
-VALUES (1, 'TCS Group (Tinkoff)', 'TCS', 'icon.jpg', 35.20, 30.00);
-VALUES (2, 'Raiffeisen Bank', 'RBIV', 'icon.jpg', 20.08, 15.97);
-VALUES (3, 'Sberbank', 'SBER', 'icon.jpg', 217.08, 150.00);
-VALUES (4,'TCS Group (Tinkoff)', 'TCS', 'icon.jpg', 35.20, 30.00);
+check ("salePrice">0, "buyPrice" >0)
+);

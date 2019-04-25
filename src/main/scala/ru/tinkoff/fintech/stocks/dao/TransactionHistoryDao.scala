@@ -1,10 +1,8 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.{Stock, TransactionHistory}
+import ru.tinkoff.fintech.stocks.db.models.{Stock, TransactionHistory}
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TransactionHistoryDao{

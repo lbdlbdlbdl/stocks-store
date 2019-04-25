@@ -9,10 +9,11 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import JwtHelper._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
+class TransactionRoutes extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -27,7 +28,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               // logger.info(s"begin transaction buying: Stock ${buy.stockId}, amount ${buy.amount} ")
               complete {
                 for {
-                  purchase <- env.transactionService.buyStock(login, buy.stockId, buy.amount).run(env)
+                  purchase <- env.transactionService.buyStock(login, buy.stockId, buy.amount)
                 } yield StatusCodes.OK -> purchase
               }
             }
@@ -42,7 +43,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                 //logger.info(s"begin transaction selling: Stock ${sell.stockId}, amount ${sell.amount} ")
                 complete {
                   for {
-                    sale <- env.transactionService.saleStock(login, sell.stockId, sell.amount).run(env)
+                    sale <- env.transactionService.saleStock(login, sell.stockId, sell.amount)
                   } yield StatusCodes.OK -> sale
                 }
               }
@@ -63,7 +64,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                     transactionHistoryPage <- env.transactionService.transactionHistoryPage(
                       params.search.getOrElse(""),
                       params.count.getOrElse(10),
-                      params.itemId.getOrElse(1)).run(env)
+                      params.itemId.getOrElse(1))
                   } yield StatusCodes.OK -> transactionHistoryPage
                 }
               }

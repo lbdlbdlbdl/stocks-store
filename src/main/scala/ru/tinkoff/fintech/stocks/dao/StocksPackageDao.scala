@@ -1,8 +1,6 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import akka.actor.ActorSystem
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.StocksPackage
+import ru.tinkoff.fintech.stocks.db.models.StocksPackage
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
