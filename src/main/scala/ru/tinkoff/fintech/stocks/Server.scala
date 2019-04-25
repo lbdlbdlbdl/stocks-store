@@ -32,8 +32,8 @@ object Server {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-    flyway.clean()
-    flyway.baseline()
+//    flyway.clean()
+//    flyway.baseline()
     flyway.migrate()
   }
 
