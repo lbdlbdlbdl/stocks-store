@@ -5,7 +5,7 @@ import ru.tinkoff.fintech.stocks.db.models.{Stock, TransactionHistory}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionHistoryDao{
+class TransactionHistoryDao {
 
   import quillContext._
 
@@ -21,15 +21,21 @@ class TransactionHistoryDao{
     }).map(newId => history.copy(id = newId))
   }
 
+  def getLastId: Future[Option[Long]] = {
+    run(quote {
+      query[TransactionHistory].map(s => s.id)
+    }).map(_.head)
+  }
+
   def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
-    run(quote{
+    run(quote {
       for {
         tHistories <- query[TransactionHistory]
           .drop(lift(offset - 1))
           .take(lift(querySize))
         stocks <- query[Stock]
           .join(_.id == tHistories.stockId)
-          .filter(s => s.name like lift(searchedStr))//s"%${lift(searchedStr)}%")
+          .filter(s => s.name like lift(searchedStr)) //s"%${lift(searchedStr)}%")
       } yield tHistories
     })
   }

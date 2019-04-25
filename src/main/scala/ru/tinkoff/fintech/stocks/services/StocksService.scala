@@ -37,10 +37,12 @@ class StocksService(implicit val priceHistoryDao: PriceHistoryDao,
   def stocksPage(searchStr: String, count: Int, itemId: Int): Future[StocksPage] = {
     //    env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
-      stocks <- stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      lastId = stocks.reverse.last.id
+      stocksPage <- stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
+      stocksSize <- stockDao.getLastId
+      stocksPageLastId = stocksPage.reverse.last.id
+      lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
     } yield StocksPage(lastId, itemId,
-      stocks.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)).reverse)
+      stocksPage.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)).reverse)
   }
 
   private def date = LocalDate.now()

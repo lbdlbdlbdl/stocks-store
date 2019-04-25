@@ -86,10 +86,12 @@ class TransactionService(implicit val userDao: UserDao,
   def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Future[TransactionHistoryPage] = {
     //    env.logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
-      tHises <- transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      responses <- Future.sequence(tHises.map(th => transactionHistory2Response(th)))
-      lastId = tHises.last.id
-    } yield TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
+      tHisesPage <- transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
+      responses <- Future.sequence(tHisesPage.map(th => transactionHistory2Response(th)))
+      tHisesPageLastId = tHisesPage.reverse.last.id
+      tHisLasiId <- transactionHistoryDao.getLastId
+      lastId = if (tHisesPageLastId.get == tHisLasiId.get) 0 else tHisesPageLastId.get // ? x: y doesnt work
+    } yield TransactionHistoryPage(lastId, itemId, responses.take(count).reverse)
   }
 
 }

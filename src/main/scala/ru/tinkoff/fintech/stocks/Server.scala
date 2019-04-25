@@ -32,8 +32,8 @@ object Server {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-            flyway.clean()
-            flyway.baseline()
+    flyway.clean()
+    flyway.baseline()
     flyway.migrate()
   }
 
@@ -65,11 +65,11 @@ object Server {
     }
 
     implicit val logger = Logging.getLogger(system, this)
-    implicit val userDao=new UserDao()
+    implicit val userDao = new UserDao()
     implicit val stockDao = new StockDao()
-    implicit val stocksPackageDao= new StocksPackageDao()
-    implicit val transactionHistoryDao= new TransactionHistoryDao()
-    implicit  val priceHistoryDao = new PriceHistoryDao()
+    implicit val stocksPackageDao = new StocksPackageDao()
+    implicit val transactionHistoryDao = new TransactionHistoryDao()
+    implicit val priceHistoryDao = new PriceHistoryDao()
 
     val stocksService = new StocksService()
     val userService = new UserService(stocksService)
@@ -100,8 +100,8 @@ object Server {
 
     initializeTask()
 
-        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+      //    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }

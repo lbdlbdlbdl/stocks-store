@@ -22,6 +22,12 @@ class StockDao{
     }).map(_.headOption)
   }
 
+  def getLastId: Future[Long] = {
+    run(quote {
+      query[Stock].map(s => s.id).max
+    }).map(_.head)
+  }
+
   def idsList(): Future[List[Long]] = {
     run(quote {
       query[Stock].map(_.id)
