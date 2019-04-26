@@ -10,41 +10,48 @@ import scala.concurrent.Future
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models._
 
-class StocksService(implicit val priceHistoryDao: PriceHistoryDao,
-                    val stockDao: StockDao) {
+import scala.util.{Failure, Success}
 
-  /*
-  def priceDelta(stock:Stock):Reader[Env, Double] = Reader { env =>
-    val secondLastPrice = env.priceHistoryDao.find(stock.id).map { case _ :: p :: _ :: Nil => p }
-  }
-  */
-
-  private def newStockBatch(stock: Future[Stock], count: Int): Future[StockBatch] =
-    for { //TODO: transaction
-      s <- stock
-      prices <- priceHistoryDao.find(s.id)
-      secondLastPrice = prices match {
-        case _ :: p :: _ => p
-      }
-      deltaPrice = s.buyPrice - secondLastPrice.buyPrice
-    } yield StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
-
+class StocksService(implicit val stockDao: StockDao,
+                    val priceHistoryDao: PriceHistoryDao) {
 
   def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Future[List[StockBatch]] =
     Future.sequence(stocksPackages.map(sp => newStockBatch(stockDao.getStock(sp.stockId), sp.count)))
 
+  def stock2StockResponse(stock: Stock): Future[StockResponse] = {
+    priceDelta(stock).map(d => StockResponse(stock.id, stock.name, stock.code, stock.iconUrl, stock.buyPrice, d))
+  }
+
+  def priceDelta(stock: Stock): Future[Double] = {
+    for {
+      prices <- priceHistoryDao.find(stock.id) //TODO: map match
+      deltaPrice = prices match {
+        case _ :: p :: _ => stock.buyPrice - p.buyPrice
+        case _ => 0.0
+      }
+    } yield deltaPrice
+  }
+
+  private def newStockBatch(stock: Future[Stock], count: Int): Future[StockBatch] =
+    for {
+      s <- stock
+      deltaPrice <- priceDelta(s)
+    } yield StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
 
   def stocksPage(searchStr: String, count: Int, itemId: Int): Future[StocksPage] = {
     //    env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       stocksPage <- stockDao.getPagedQueryWithFind(searchStr, itemId - 1, count + 1)
       stocksSize <- stockDao.getLastId
-      
+
       stocksPageLastId = stocksPage.last.id
       lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
+
+      stocksRes <-  Future.sequence(stocksPage.take(count).map(s => stock2StockResponse(s)))
     } yield StocksPage(
       lastId, itemId,
-      stocksPage.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)))
+      stocksRes)
+    //      stocksPage.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)))
   }
 
   private def date = LocalDate.now()
@@ -75,7 +82,6 @@ class StocksService(implicit val priceHistoryDao: PriceHistoryDao,
     }
 
     recTail(list, List.empty[PricePackage])
-
   }
 
   def stockPriceHistory(range: String, id: Long): Future[PriceHistoryResponse] = {

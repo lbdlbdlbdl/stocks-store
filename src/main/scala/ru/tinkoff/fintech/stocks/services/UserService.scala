@@ -34,7 +34,7 @@ class UserService(stocksService: StocksService)
   def createUser(login: String, password: String): Future[Token] =
     for {
       maybeUser <- userDao.find(login)
-      user <-
+      user <- //todo
         if (maybeUser.isDefined) throw ValidationException("User already exists.")
         else userDao.add(newUser(login, password))
       _ <- addStocksForNewUser(user)
@@ -64,7 +64,7 @@ class UserService(stocksService: StocksService)
     for {
       maybeUser <- userDao.find(login)
       user = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      stocksPackage <- stocksPackageDao.find(user.id.get)
+      stocksPackage <- stocksPackageDao.find(user.id.get, false)
       stockBatches <- stocksService.stockPackages2StockBatches(stocksPackage)
     } yield AccountInfo(login, user.balance, stockBatches)
 

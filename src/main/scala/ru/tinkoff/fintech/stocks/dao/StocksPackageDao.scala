@@ -5,14 +5,22 @@ import ru.tinkoff.fintech.stocks.db.models.StocksPackage
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class StocksPackageDao{
+class StocksPackageDao {
 
   import quillContext._
 
-  def find(userId: Long): Future[List[StocksPackage]] = {
-    run(quote {
-      query[StocksPackage].filter(_.userId == lift(userId))
-    })
+  def find(userId: Long, with0count: Boolean): Future[List[StocksPackage]] = {
+    if (with0count)
+      run(quote {
+        query[StocksPackage]
+          .filter(_.userId == lift(userId))
+      })
+    else
+      run(quote {
+        query[StocksPackage]
+          .filter(_.userId == lift(userId))
+          .filter(_.count != 0)
+      })
   }
 
   def findByStock(userId: Long, stockId: Long): Future[Option[StocksPackage]] = {
@@ -27,10 +35,10 @@ class StocksPackageDao{
     }).map(newId => stocksPack.copy(id = newId))
   }
 
-  def updatePackage(id: Long, newCount:Int): Future[Unit] = {
-      run(quote {
-        query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
-      }).map(_ => ())
+  def updatePackage(id: Long, newCount: Int): Future[Unit] = {
+    run(quote {
+      query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
+    }).map(_ => ())
   }
 
 }

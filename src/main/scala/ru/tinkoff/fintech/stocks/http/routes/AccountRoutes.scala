@@ -7,10 +7,11 @@ import cats.data.Reader
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
+import JwtHelper._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AccountRoutes extends FailFastCirceSupport with JwtHelper {
+class AccountRoutes extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._

@@ -45,9 +45,8 @@ object Server {
 
     applyMigrations(jdbcUrl)
 
-    implicit val quillContext: PostgresAsyncContext[Escape] =
-      new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
-
+//    implicit val quillContext: PostgresAsyncContext[Escape] =
+//      new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
@@ -70,6 +69,7 @@ object Server {
     implicit val stocksPackageDao = new StocksPackageDao()
     implicit val transactionHistoryDao = new TransactionHistoryDao()
     implicit val priceHistoryDao = new PriceHistoryDao()
+    implicit val transactionDao = new TransactionDao()
 
     val stocksService = new StocksService()
     val userService = new UserService(stocksService)

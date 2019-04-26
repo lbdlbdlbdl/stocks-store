@@ -5,7 +5,7 @@ import ru.tinkoff.fintech.stocks.db.models.Stock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class StockDao{
+class StockDao {
 
   import quillContext._
 
@@ -35,12 +35,12 @@ class StockDao{
   }
 
   def updatePrices(id: Long, buyPrice: Double, sellPrice: Double): Future[Unit] = {
-      run(
-        //        quote(infix"UPDATE Stock SET buyPrice = $buyPrice, salePrice = $sellPrice WHERE id = $id")
-        quote {
-          query[Stock].filter(_.id == lift(id)).update(_.salePrice -> lift(sellPrice), _.buyPrice -> lift(buyPrice))
-        }
-      ).map(_ => ())
+    run(
+      //        quote(infix"UPDATE Stock SET buyPrice = $buyPrice, salePrice = $sellPrice WHERE id = $id")
+      quote {
+        query[Stock].filter(_.id == lift(id)).update(_.salePrice -> lift(sellPrice), _.buyPrice -> lift(buyPrice))
+      }
+    ).map(_ => ())
   }
 
   def findStrInName(str: String): Future[List[Stock]] = {

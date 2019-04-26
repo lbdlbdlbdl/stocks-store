@@ -8,10 +8,11 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import JwtHelper._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
+class TransactionRoutes extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -25,7 +26,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
               val login = getLoginFromClaim(claim)
               complete {
                 for {
-                  purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount).run(env)
+                  purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount)
                 } yield StatusCodes.OK -> purchase
               }
             }
@@ -39,7 +40,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                 val login = getLoginFromClaim(claim)
                 complete {
                   for {
-                    sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount).run(env)
+                    sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount)
                   } yield StatusCodes.OK -> sale
                 }
               }
@@ -62,7 +63,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                       login,
                       params.search.getOrElse(""),
                       params.count.getOrElse(10),
-                      params.itemId.getOrElse(1)).run(env)
+                      params.itemId.getOrElse(1))
                   } yield StatusCodes.OK -> transactionHistoryPage
                 }
               }

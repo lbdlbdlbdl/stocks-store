@@ -1,9 +1,6 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import akka.http.scaladsl.model.Uri.Path.~
-import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
 
 import ru.tinkoff.fintech.stocks.Env
 

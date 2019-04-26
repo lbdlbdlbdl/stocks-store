@@ -21,15 +21,10 @@ class TransactionHistoryDao {
     }).map(newId => history.copy(id = newId))
   }
 
+
   def getLastId: Future[Option[Long]] = {
     run(quote {
-      query[TransactionHistory].map(s => s.id)
-    }).map(_.head)
-  }
-
-  def getLastId: Future[Long] = {
-    run(quote {
-      query[Stock].map(s => s.id).max
+      query[TransactionHistory].map(s => s.id).max
     }).map(_.head)
   }
 
@@ -38,7 +33,7 @@ class TransactionHistoryDao {
       for {
         tHistories <- query[TransactionHistory]
           .filter(t => t.login like s"%${lift(login)}%")
-          .sortBy(t => t.id)(Ord.asc)
+          .sortBy(t => t.id)(Ord.desc)
           .drop(lift(offset))
           .take(lift(querySize))
         stocks <- query[Stock]
