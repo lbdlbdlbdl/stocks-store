@@ -1,13 +1,14 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import ru.tinkoff.fintech.stocks.db.models.Stock
+import io.getquill.{Escape, PostgresAsyncContext}
+import ru.tinkoff.fintech.stocks.db.Stock
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class StockDao{
+class StockDao(implicit val context: PostgresAsyncContext[Escape],
+               implicit val exctx: ExecutionContext) {
 
-  import quillContext._
+  import context._
 
   //найдем описание акции
   def getStock(id: Long): Future[Stock] = {
@@ -35,12 +36,14 @@ class StockDao{
   }
 
   def updatePrices(id: Long, buyPrice: Double, sellPrice: Double): Future[Unit] = {
+    Future {
       run(
         //        quote(infix"UPDATE Stock SET buyPrice = $buyPrice, salePrice = $sellPrice WHERE id = $id")
         quote {
           query[Stock].filter(_.id == lift(id)).update(_.salePrice -> lift(sellPrice), _.buyPrice -> lift(buyPrice))
         }
-      ).map(_ => ())
+      )
+    }
   }
 
   def findStrInName(str: String): Future[List[Stock]] = {
@@ -52,9 +55,11 @@ class StockDao{
   def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[Stock]] = {
     run(quote {
       query[Stock]
-        .drop(lift(offset - 1))
-        .filter(s => s.name.toLowerCase like lift(searchedStr.toLowerCase))//s"%${lift(searchedStr.toLowerCase)}%")
+        .sortBy(s => s.id)(Ord.asc)
+        .drop(lift(offset))
+        .filter(s => s.name.toLowerCase like s"%${lift(searchedStr.toLowerCase)}%")
         .take(lift(querySize))
     })
   }
+
 }

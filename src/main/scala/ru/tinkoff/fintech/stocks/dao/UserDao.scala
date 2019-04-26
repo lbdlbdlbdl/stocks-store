@@ -1,13 +1,14 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import ru.tinkoff.fintech.stocks.db.models.User
+import io.getquill.{Escape, PostgresAsyncContext}
+import ru.tinkoff.fintech.stocks.db.User
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class UserDao {
+class UserDao(implicit val context: PostgresAsyncContext[Escape],
+              implicit val exctx: ExecutionContext) {
 
-  import quillContext._
+  import context._
 
   // поищем что-нибудь в БД
   def find(login: String): Future[Option[User]] = {
@@ -31,8 +32,11 @@ class UserDao {
   }
 
   def updateBalance(login: String, newBalance: Double): Future[Unit] = {
-    run(quote {
-      query[User].filter(_.login == lift(login)).update(_.balance -> lift(newBalance))
-    }).map(_ => ())
+    Future {
+      run(quote {
+        query[User].filter(_.login == lift(login)).update(_.balance -> lift(newBalance))
+      })
+    }
   }
+
 }

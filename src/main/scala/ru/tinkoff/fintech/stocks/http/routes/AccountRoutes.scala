@@ -1,7 +1,5 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import akka.actor.ActorSystem
-import akka.event.Logging
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
@@ -11,9 +9,8 @@ import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import JwtHelper._
 
-class AccountRoutes extends FailFastCirceSupport{
+class AccountRoutes extends FailFastCirceSupport with JwtHelper {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -23,10 +20,10 @@ class AccountRoutes extends FailFastCirceSupport{
         authenticated { claim =>
           get {
             val login = getLoginFromClaim(claim)
-//            log.info(s"get account info for user: $login")
+            //            log.info(s"get account info for user: $login")
             complete {
               for {
-                accountInfo <- env.userService.accountInfo(login)
+                accountInfo <- env.userService.accountInfo(login).run(env)
               } yield StatusCodes.OK -> accountInfo
             }
           }

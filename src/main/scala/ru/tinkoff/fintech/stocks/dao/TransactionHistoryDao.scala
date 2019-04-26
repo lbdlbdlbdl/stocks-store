@@ -1,13 +1,16 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import ru.tinkoff.fintech.stocks.db.models.{Stock, TransactionHistory}
+import akka.actor.ActorSystem
+import io.getquill.{Escape, PostgresAsyncContext}
+import ru.tinkoff.fintech.stocks.db.{Stock, TransactionHistory}
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class TransactionHistoryDao {
+class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
+                            implicit val exctx: ExecutionContext,
+                            implicit val system: ActorSystem) {
 
-  import quillContext._
+  import context._
 
   def find(login: String): Future[List[TransactionHistory]] = {
     run(quote {
@@ -21,21 +24,23 @@ class TransactionHistoryDao {
     }).map(newId => history.copy(id = newId))
   }
 
-  def getLastId: Future[Option[Long]] = {
+  def getLastId: Future[Long] = {
     run(quote {
-      query[TransactionHistory].map(s => s.id)
+      query[Stock].map(s => s.id).max
     }).map(_.head)
   }
 
-  def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
-    run(quote {
+  def getPagedQueryWithFind(login: String, searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
+    run(quote{
       for {
         tHistories <- query[TransactionHistory]
-          .drop(lift(offset - 1))
+          .filter(t => t.login like s"%${lift(login)}%")
+          .sortBy(t => t.id)(Ord.asc)
+          .drop(lift(offset))
           .take(lift(querySize))
         stocks <- query[Stock]
           .join(_.id == tHistories.stockId)
-          .filter(s => s.name like lift(searchedStr)) //s"%${lift(searchedStr)}%")
+          .filter(t => t.name like s"%${lift(searchedStr)}%")
       } yield tHistories
     })
   }
