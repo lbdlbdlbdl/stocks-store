@@ -1,6 +1,6 @@
 package ru.tinkoff.fintech.stocks
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDateTime
 
 import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}

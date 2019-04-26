@@ -1,16 +1,14 @@
 package ru.tinkoff.fintech.stocks.services
 
-import akka.actor.ActorSystem
-import akka.event.Logging
-import cats.data.{Reader, ReaderT}
-import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage, User, _}
+import cats.data.ReaderT
+import ru.tinkoff.fintech.stocks.db.{StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 import ru.tinkoff.fintech.stocks.result.Result
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class UserService extends JwtHelper { //кусочек ооп
 
@@ -60,7 +58,7 @@ class UserService extends JwtHelper { //кусочек ооп
       maybeUser <- env.userDao.find(login)
       user = maybeUser.getOrElse(throw NotFoundException("User not found."))
       stocksPackage <- env.stocksPackageDao.find(user.id.get)
-      stockBatches <- env.stocksService.stockPackages2StockBatches(stocksPackage).run(env)
+      stockBatches <- env.stocksService.stockPackages2StockBatches(stocksPackage.filter(_.count != 0)).run(env)
       f = println(stockBatches)
     } yield Responses.AccountInfo(login, user.balance, stockBatches)
   }

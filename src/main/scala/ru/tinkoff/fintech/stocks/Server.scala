@@ -4,20 +4,18 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server._
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.LogEntry
 import akka.stream.{ActorMaterializer, Materializer}
 import ch.megard.akka.http.cors.scaladsl.model.HttpOriginMatcher
-import ch.megard.akka.http.cors.scaladsl.settings
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
 import ru.tinkoff.fintech.stocks.dao._
-import ru.tinkoff.fintech.stocks.http.routes._
 import ru.tinkoff.fintech.stocks.http._
+import ru.tinkoff.fintech.stocks.http.routes._
 import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
@@ -66,12 +64,13 @@ object Server extends JwtHelper {
     val newEnv = Env(
       Logging.getLogger(system, this),
       new UserService(), new StocksService(), new TransactionService(),
-      new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao(), new PriceHistoryDao())
+      new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao(),
+      new PriceHistoryDao(), new TransactionDao())
 
     val allRoutes = {
 
-      import ru.tinkoff.fintech.stocks.exception.ExceptionHandlers._
       import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+      import ru.tinkoff.fintech.stocks.exception.ExceptionHandlers._
 
       val routes = new AllRoutes(newEnv).routes
 
@@ -90,7 +89,7 @@ object Server extends JwtHelper {
 
     initializeTask()
 
-        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+            Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
 //    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 

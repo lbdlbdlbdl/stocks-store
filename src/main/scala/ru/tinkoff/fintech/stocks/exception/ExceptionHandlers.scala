@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives.{complete, extractUri}
 import akka.http.scaladsl.server.ExceptionHandler
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import Exceptions._
+import ru.tinkoff.fintech.stocks.exception.Exceptions._
 
 object ExceptionHandlers extends FailFastCirceSupport {
   import io.circe.generic.auto._
@@ -13,7 +13,7 @@ object ExceptionHandlers extends FailFastCirceSupport {
   final case class ErrorBody(statusCode: String, message: String)
 
   private def completeFailedRequest[E <: Throwable](statusCode: StatusCode, exception: E) = {
-    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage}")// ${exception.printStackTrace()}")
+    val body = ErrorBody(statusCode.toString(), s"${exception.getMessage}") // ${exception.printStackTrace()}")
     extractUri { uri => complete(statusCode, body) }
   }
 

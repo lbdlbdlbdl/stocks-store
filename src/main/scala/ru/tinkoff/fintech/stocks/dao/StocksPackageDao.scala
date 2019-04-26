@@ -6,9 +6,9 @@ import ru.tinkoff.fintech.stocks.db.StocksPackage
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
-                       implicit val exctx: ExecutionContext,
-                       implicit val system: ActorSystem) {
+class StocksPackageDao(implicit context: PostgresAsyncContext[Escape],
+                       exctx: ExecutionContext,
+                       system: ActorSystem) {
 
   import akka.event.Logging
   import context._
@@ -32,14 +32,5 @@ class StocksPackageDao(implicit val context: PostgresAsyncContext[Escape],
     run(quote {
       query[StocksPackage].insert(lift(stocksPack)).returning(_.id)
     }).map(newId => stocksPack.copy(id = newId))
-  }
-
-  def updatePackage(id: Long, newCount:Int): Future[Unit] = {
-    Future {
-      log.info(s"update package id=$id new count=$newCount")
-      run(quote {
-        query[StocksPackage].filter(_.id.forall(_ == lift(id))).update(_.count -> lift(newCount))
-      })
-    }
   }
 }
