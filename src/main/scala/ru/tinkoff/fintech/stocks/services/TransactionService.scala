@@ -18,6 +18,7 @@ class TransactionService extends JwtHelper {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
   def companion(login: String, stockId: Long, amount: Int): Result[Companion] = ReaderT { env =>
+    if (amount < 1) throw ValidationException("Amount must be more than 0.")
     for {
       maybeUser <- env.userDao.find(login)
       userInfo = maybeUser.getOrElse(throw NotFoundException("User not found."))
