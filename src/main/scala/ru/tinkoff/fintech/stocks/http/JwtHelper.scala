@@ -3,11 +3,11 @@ package ru.tinkoff.fintech.stocks.http
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import com.typesafe.config.ConfigFactory
+import io.circe._
 import io.circe.generic.auto._
+import io.circe.parser._
 import io.circe.syntax._
 import pdi.jwt._
-import io.circe._
-import io.circe.parser._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.{Requests, Responses}
 

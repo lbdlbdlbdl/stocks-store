@@ -7,7 +7,7 @@ import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
-import ru.tinkoff.fintech.stocks.http.dtos.Responses.{PriceHistory, PricePackage}
+import ru.tinkoff.fintech.stocks.http.dtos.Responses.PricePackage
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -51,7 +51,7 @@ class StocksService extends JwtHelper {
   }
 
   def compress(list: List[PricePackage]): List[PricePackage] = {
-    val step = list.length /20 + 1
+    val step = list.length / 20 + 1
 
     def averaged(t: List[PricePackage]): PricePackage = {
       val p = println(step)

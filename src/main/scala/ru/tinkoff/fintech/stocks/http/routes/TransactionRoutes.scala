@@ -1,6 +1,5 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
@@ -24,10 +23,9 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
           post {
             entity(as[Requests.Transaction]) { buy =>
               val login = getLoginFromClaim(claim)
-              // logger.info(s"begin transaction buying: Stock ${buy.stockId}, amount ${buy.amount} ")
               complete {
                 for {
-                  purchase <- env.transactionService.buyStock(login, buy.stockId, buy.amount).run(env)
+                  purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount).run(env)
                 } yield StatusCodes.OK -> purchase
               }
             }
@@ -39,10 +37,9 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
             post {
               entity(as[Requests.Transaction]) { sell =>
                 val login = getLoginFromClaim(claim)
-                //logger.info(s"begin transaction selling: Stock ${sell.stockId}, amount ${sell.amount} ")
                 complete {
                   for {
-                    sale <- env.transactionService.saleStock(login, sell.stockId, sell.amount).run(env)
+                    sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount).run(env)
                   } yield StatusCodes.OK -> sale
                 }
               }

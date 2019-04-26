@@ -1,18 +1,13 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
 import cats.data.Reader
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import io.circe._
-import io.circe.parser._
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
 import ru.tinkoff.fintech.stocks.http.dtos.Requests.RangeHistory
-import ru.tinkoff.fintech.stocks.services._
-
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

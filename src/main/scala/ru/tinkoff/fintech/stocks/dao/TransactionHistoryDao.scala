@@ -25,16 +25,16 @@ class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
   }
 
   def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
-//    run(quote {
-//      query[TransactionHistory]
-//        .drop(lift(offset - 1))
-//        .rightJoin(query[Stock])
-//        .on(_.idStock == _.id)
-//        .filter(pair => pair._2.name like s"%${lift(searchedStr)}%")
-//        .take(lift(querySize))
-//      //        .map(pair => pair._1.getOrElse(0))
-//    })
-    run(quote{
+    //    run(quote {
+    //      query[TransactionHistory]
+    //        .drop(lift(offset - 1))
+    //        .rightJoin(query[Stock])
+    //        .on(_.idStock == _.id)
+    //        .filter(pair => pair._2.name like s"%${lift(searchedStr)}%")
+    //        .take(lift(querySize))
+    //      //        .map(pair => pair._1.getOrElse(0))
+    //    })
+    run(quote {
       for {
         tHistories <- query[TransactionHistory]
           .drop(lift(offset - 1))

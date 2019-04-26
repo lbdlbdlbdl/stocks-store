@@ -12,7 +12,7 @@ class PriceHistoryDao(implicit val context: PostgresAsyncContext[Escape],
 
   import context._
 
-  def find(idStock:Long):Future[List[PriceHistory]] = {
+  def find(idStock: Long): Future[List[PriceHistory]] = {
     run(quote {
       query[PriceHistory].filter(_.stockId == lift(idStock))
     })
