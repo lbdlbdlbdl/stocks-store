@@ -16,31 +16,31 @@ object Responses {
                         priceDelta: Double,
                         count: Int)
 
-  case class StockResponse(id: Long,
-                           code: String,
-                           name: String,
-                           iconUrl: String,
-                           price: Double,
-                           priceDelta: Double)
+  case class Stock(id: Long,
+                   code: String,
+                   name: String,
+                   iconUrl: String,
+                   price: Double,
+                   priceDelta: Double)
 
-  case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[StockResponse])
+  case class StocksPage(nextItemId: Long, prevItemId: Long, items: List[Stock])
 
   case class StockHistory(id: Long,
                           code: String,
                           name: String,
                           iconUrl: String)
 
-  case class TransactionHistoryResponse(stock: StockHistory,
+  case class TransactionHistory(stock: StockHistory,
                                 amount: Int,
                                 totalPrice: Double,
                                 date: LocalDateTime,
                                 `type`: String)
 
-  case class TransactionHistoryPage(nextItemId: Long, prevItemId: Long, items: List[TransactionHistoryResponse])
+  case class TransactionHistoryPage(nextItemId: Long, prevItemId: Long, items: List[TransactionHistory])
 
   case class TransactionSuccess(status: String = "success")
 
-  case class PriceHistoryResponse(id: Long,
+  case class PriceHistory(id: Long,
                           code: String,
                           name: String,
                           iconUrl: String,

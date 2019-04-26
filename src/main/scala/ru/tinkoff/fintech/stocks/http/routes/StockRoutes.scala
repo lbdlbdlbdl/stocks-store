@@ -24,7 +24,7 @@ class StockRoutes extends FailFastCirceSupport {
           ).as(RangeHistory) { params =>
             complete {
               for {
-                priceHistory <- env.stocksService.stockPriceHistory(params.range.getOrElse("week"), stockId)
+                priceHistory <- env.stocksService.stockPriceHistory(params.range.getOrElse("week"), stockId).run(env)
               } yield StatusCodes.OK -> priceHistory
             }
           }
@@ -41,6 +41,7 @@ class StockRoutes extends FailFastCirceSupport {
                     params.search.getOrElse(""),
                     params.count.getOrElse(10),
                     params.itemId.getOrElse(1))
+                  .run(env)
               } yield StatusCodes.OK -> stocksPage
             }
           }

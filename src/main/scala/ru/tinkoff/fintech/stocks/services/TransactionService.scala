@@ -2,27 +2,26 @@ package ru.tinkoff.fintech.stocks.services
 
 import java.time.LocalDateTime
 
+import cats.data.ReaderT
+import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
-import ru.tinkoff.fintech.stocks.http.dtos.Responses._
-
-import scala.concurrent.Future
-import java.time.LocalDateTime
-
 import ru.tinkoff.fintech.stocks.http.JwtHelper
+import ru.tinkoff.fintech.stocks.http.dtos.Responses
+import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class TransactionService(implicit val userDao: UserDao,
-                         val stockDao: StockDao,
-                         val stocksPackageDao: StocksPackageDao,
-                         val transactionHistoryDao: TransactionHistoryDao) {
+case class Companion(user: User, bag: Option[StocksPackage], stock: Stock)
+
+class TransactionService extends JwtHelper {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
-  def companion(login: String, stockId: Long, amount: Int): Future[Companion] =
+  def companion(login: String, stockId: Long, amount: Int): Result[Companion] = ReaderT { env =>
     for {
-      maybeUser <- userDao.find(login)
+      maybeUser <- env.userDao.find(login)
       userInfo = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      maybeStock <- stockDao.getStockOption(stockId)
+      maybeStock <- env.stockDao.getStockOption(stockId)
       stock = maybeStock.getOrElse(throw NotFoundException(s"Stock not found id=$stockId."))
       bag <- env.stocksPackageDao.findByStock(userInfo.id.get, stockId)
     } yield Companion(userInfo, bag, stock)
@@ -37,25 +36,25 @@ class TransactionService(implicit val userDao: UserDao,
       _ <- act match {
         case "buy" => env.transactionDao.transactionBuy(cmp.stock.id, cmp.user.id.get, price, amount)
         case "sell" => env.transactionDao.transactionSell(cmp.stock.id, cmp.user.id.get, price, amount)
+      }
+      _ <- env.transactionHistoryDao.add(
+        TransactionHistory(None, login, stockId, amount, price, timeNow, act))
+    } yield Responses.TransactionSuccess()
+  }
 
-
-  def transactionHistory2Response(value: TransactionHistory): Future[TransactionHistoryResponse] =
+  def transactionHistory2Response(value: TransactionHistory): Result[Responses.TransactionHistory] = ReaderT { env =>
     for {
-      stock <- stockDao.getStock(value.stockId)
-    } yield TransactionHistoryResponse(
-      StockHistory(stock.id, stock.code, stock.name, stock.iconUrl),
-      value.amount, value.totalPrice, value.date, value.`type`)
+      stock <- env.stockDao.getStock(value.stockId)
+    } yield Responses.TransactionHistory(stock.as[Responses.StockHistory], value.amount, value.totalPrice, value.date, value.`type`)
+  }
 
-
-  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Future[TransactionHistoryPage] = {
-    //    env.logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
+  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+    env.logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
-      tHisesPage <- transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      responses <- Future.sequence(tHisesPage.map(th => transactionHistory2Response(th)))
-      tHisesPageLastId = tHisesPage.reverse.last.id
-      tHisLasiId <- transactionHistoryDao.getLastId
-      lastId = if (tHisesPageLastId.get == tHisLasiId.get) 0 else tHisesPageLastId.get // ? x: y doesnt work
-    } yield TransactionHistoryPage(lastId, itemId, responses.take(count).reverse)
+      tHises <- env.transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
+      responses <- Future.sequence(tHises.map(th => transactionHistory2Response(th).run(env)))
+      lastId = tHises.last.id
+    } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
   }
 
 }

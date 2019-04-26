@@ -10,9 +10,8 @@ import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import JwtHelper._
 
-class UserRoutes extends FailFastCirceSupport {
+class UserRoutes extends FailFastCirceSupport with JwtHelper {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -21,10 +20,10 @@ class UserRoutes extends FailFastCirceSupport {
       path("signup") {
         post {
           entity(as[Requests.UserRequest]) { user =>
-//            env.logger.info(s"begin signup, user: $user")
+            env.logger.info(s"begin signup, user: $user")
             complete {
               for {
-                tokens <- env.userService.createUser(user.login, user.password)
+                tokens <- env.userService.createUser(user.login, user.password).run(env)
               } yield StatusCodes.OK -> tokens
             }
           }
@@ -33,10 +32,10 @@ class UserRoutes extends FailFastCirceSupport {
         path("signin") {
           post {
             entity(as[Requests.UserRequest]) { user =>
-//              env.logger.info(s"begin signin, user: $user")
+              env.logger.info(s"begin signin, user: $user")
               complete {
                 for {
-                  tokens <- env.userService.authenticate(user.login, user.password)
+                  tokens <- env.userService.authenticate(user.login, user.password).run(env)
                 } yield StatusCodes.OK -> tokens
               }
             }
@@ -45,7 +44,7 @@ class UserRoutes extends FailFastCirceSupport {
         path("refresh") {
           post {
             entity(as[Requests.RefreshToken]) { refreshToken =>
-//              env.logger.info(s"begin refresh token")
+              env.logger.info(s"begin refresh token")
               complete {
                 for {
                   tokens <- env.userService.refreshTokens(refreshToken.refreshToken)

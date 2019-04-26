@@ -1,13 +1,19 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import ru.tinkoff.fintech.stocks.db.models.StocksPackage
+import akka.actor.ActorSystem
+import io.getquill.{Escape, PostgresAsyncContext}
+import ru.tinkoff.fintech.stocks.db.StocksPackage
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class StocksPackageDao{
+class StocksPackageDao(implicit context: PostgresAsyncContext[Escape],
+                       exctx: ExecutionContext,
+                       system: ActorSystem) {
 
-  import quillContext._
+  import akka.event.Logging
+  import context._
+
+  val log = Logging.getLogger(system, this)
 
   def find(userId: Long): Future[List[StocksPackage]] = {
     run(quote {
@@ -22,6 +28,7 @@ class StocksPackageDao{
   }
 
   def add(stocksPack: StocksPackage): Future[StocksPackage] = {
+    log.info("start add stockspackage")
     run(quote {
       query[StocksPackage].insert(lift(stocksPack)).returning(_.id)
     }).map(newId => stocksPack.copy(id = newId))

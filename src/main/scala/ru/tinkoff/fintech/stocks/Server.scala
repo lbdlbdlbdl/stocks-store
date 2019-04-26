@@ -21,7 +21,7 @@ import ru.tinkoff.fintech.stocks.services._
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
 
-object Server {
+object Server extends JwtHelper {
 
   def applyMigrations(jdbcUrl: String): Unit = {
     import org.postgresql.ds.PGSimpleDataSource
@@ -30,8 +30,8 @@ object Server {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-//    flyway.clean()
-//    flyway.baseline()
+    //        flyway.clean()
+    //        flyway.baseline()
     flyway.migrate()
   }
 
@@ -45,8 +45,6 @@ object Server {
 
     implicit val quillContext: PostgresAsyncContext[Escape] =
       new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
-
-
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()
@@ -62,19 +60,12 @@ object Server {
       logRequest(requestMethodAs(Logging.InfoLevel) _)
     }
 
-    implicit val logger = Logging.getLogger(system, this)
-    implicit val userDao = new UserDao()
-    implicit val stockDao = new StockDao()
-    implicit val stocksPackageDao = new StocksPackageDao()
-    implicit val transactionHistoryDao = new TransactionHistoryDao()
-    implicit val priceHistoryDao = new PriceHistoryDao()
-
-    val stocksService = new StocksService()
-    val userService = new UserService(stocksService)
-    val transactionService = new TransactionService()
-
     //singleton style
-    val newEnv = Env(userService, stocksService, transactionService)
+    val newEnv = Env(
+      Logging.getLogger(system, this),
+      new UserService(), new StocksService(), new TransactionService(),
+      new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao(),
+      new PriceHistoryDao(), new TransactionDao())
 
     val allRoutes = {
 
@@ -94,12 +85,12 @@ object Server {
       }
     }
 
-    def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
+    def initializeTask(): Unit = new PriceGenerationTask(newEnv.stockDao, newEnv.priceHistoryDao)
 
     initializeTask()
 
-    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-      //    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+    //        Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }
