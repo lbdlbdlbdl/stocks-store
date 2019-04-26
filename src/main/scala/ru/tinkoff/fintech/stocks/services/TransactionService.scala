@@ -75,13 +75,32 @@ class TransactionService extends JwtHelper {
     } yield Responses.TransactionHistory(stock.as[Responses.StockHistory], value.amount, value.totalPrice, value.date, value.`type`)
   }
 
-  def transactionHistoryPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+  def transactionHistoryPage(login: String, searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
     env.logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
-      tHises <- env.transactionHistoryDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      responses <- Future.sequence(tHises.map(th => transactionHistory2Response(th).run(env)))
-      lastId = tHises.last.id
-    } yield Responses.TransactionHistoryPage(lastId.get, itemId, responses.take(count).reverse)
+      historiesPage <- env.transactionHistoryDao.getPagedQueryWithFind(login, searchStr, itemId - 1, count + 1)
+      historiesSize <- env.transactionHistoryDao.getLastId
+
+      historyPageLastId = historiesPage.last.id.get
+      lastId = if (historyPageLastId == historiesSize) 0 else historyPageLastId // ? x: y doesnt work
+
+      responses <-
+        Future.sequence(historiesPage.take(count).map(th => transactionHistory2Response(th).run(env)))
+
+    } yield Responses.TransactionHistoryPage(lastId, itemId, responses)
   }
+
+  //  def stocksPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
+  //    env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
+  //    for {
+  //      stocksPage <- env.stockDao.getPagedQueryWithFind(searchStr, itemId - 1, count + 1)
+  //      stocksSize <- env.stockDao.getLastId
+  //
+  //      stocksPageLastId = stocksPage.last.id
+  //      lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
+  //    } yield Responses.StocksPage(
+  //      lastId, itemId,
+  //      stocksPage.take(count).map(s => s.as[Responses.Stock]))
+  //  }
 
 }

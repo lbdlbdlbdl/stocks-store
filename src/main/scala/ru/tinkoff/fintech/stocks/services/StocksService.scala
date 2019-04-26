@@ -7,7 +7,7 @@ import ru.tinkoff.fintech.stocks.db.{Stock, StocksPackage}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.JwtHelper
 import ru.tinkoff.fintech.stocks.http.dtos.Responses
-import ru.tinkoff.fintech.stocks.http.dtos.Responses.{PriceHistory, PricePackage}
+import ru.tinkoff.fintech.stocks.http.dtos.Responses.{PriceHistory, PricePackage, StocksPage}
 import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -33,9 +33,14 @@ class StocksService extends JwtHelper {
   def stocksPage(searchStr: String, count: Int, itemId: Int): Result[Responses.StocksPage] = ReaderT { env =>
     env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
-      stocks <- env.stockDao.getPagedQueryWithFind(searchStr, itemId, count + 1)
-      lastId = stocks.last.id
-    } yield Responses.StocksPage(lastId, itemId, stocks.take(count).map(s => s.as[Responses.Stock]).reverse)
+      stocksPage <- env.stockDao.getPagedQueryWithFind(searchStr, itemId - 1, count + 1)
+      stocksSize <- env.stockDao.getLastId
+
+      stocksPageLastId = stocksPage.last.id
+      lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
+    } yield Responses.StocksPage(
+      lastId, itemId,
+      stocksPage.take(count).map(s => s.as[Responses.Stock]))
   }
 
   private def date = LocalDate.now()
@@ -51,7 +56,7 @@ class StocksService extends JwtHelper {
   }
 
   def compress(list: List[PricePackage]): List[PricePackage] = {
-    val step = list.length /20 + 1
+    val step = list.length / 20 + 1
 
     def averaged(t: List[PricePackage]): PricePackage = {
       val p = println(step)

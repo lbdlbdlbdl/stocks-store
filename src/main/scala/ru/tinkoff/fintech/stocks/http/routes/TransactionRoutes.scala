@@ -58,9 +58,11 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                 "itemId".as[Int] ?
               ).as(Requests.PageParameters) { params =>
                 //logger.info(s"begin get transaction history page")
+                val login = getLoginFromClaim(claim)
                 complete {
                   for {
                     transactionHistoryPage <- env.transactionService.transactionHistoryPage(
+                      login,
                       params.search.getOrElse(""),
                       params.count.getOrElse(10),
                       params.itemId.getOrElse(1)).run(env)

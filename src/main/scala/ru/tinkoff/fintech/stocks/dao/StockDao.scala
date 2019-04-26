@@ -23,6 +23,12 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(_.headOption)
   }
 
+  def getLastId: Future[Long] = {
+    run(quote {
+      query[Stock].map(s => s.id).max
+    }).map(_.head)
+  }
+
   def idsList(): Future[List[Long]] = {
     run(quote {
       query[Stock].map(_.id)
@@ -49,9 +55,11 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
   def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[Stock]] = {
     run(quote {
       query[Stock]
-        .drop(lift(offset - 1))
+        .sortBy(s => s.id)(Ord.asc)
+        .drop(lift(offset))
         .filter(s => s.name.toLowerCase like s"%${lift(searchedStr.toLowerCase)}%")
         .take(lift(querySize))
     })
   }
+
 }

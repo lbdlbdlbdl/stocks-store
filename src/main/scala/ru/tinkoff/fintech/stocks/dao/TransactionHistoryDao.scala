@@ -24,24 +24,23 @@ class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(newId => history.copy(id = newId))
   }
 
-  def getPagedQueryWithFind(searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
-//    run(quote {
-//      query[TransactionHistory]
-//        .drop(lift(offset - 1))
-//        .rightJoin(query[Stock])
-//        .on(_.idStock == _.id)
-//        .filter(pair => pair._2.name like s"%${lift(searchedStr)}%")
-//        .take(lift(querySize))
-//      //        .map(pair => pair._1.getOrElse(0))
-//    })
+  def getLastId: Future[Long] = {
+    run(quote {
+      query[Stock].map(s => s.id).max
+    }).map(_.head)
+  }
+
+  def getPagedQueryWithFind(login: String, searchedStr: String, offset: Int, querySize: Int): Future[List[TransactionHistory]] = {
     run(quote{
       for {
         tHistories <- query[TransactionHistory]
-          .drop(lift(offset - 1))
+          .filter(t => t.login like s"%${lift(login)}%")
+          .sortBy(t => t.id)(Ord.asc)
+          .drop(lift(offset))
           .take(lift(querySize))
         stocks <- query[Stock]
           .join(_.id == tHistories.stockId)
-          .filter(s => s.name like s"%${lift(searchedStr)}%")
+          .filter(t => t.name like s"%${lift(searchedStr)}%")
       } yield tHistories
     })
   }
