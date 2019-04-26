@@ -1,5 +1,7 @@
 package ru.tinkoff.fintech.stocks.dao
 
+import java.util.concurrent.Executors
+
 import akka.actor.ActorSystem
 import io.getquill.{Escape, PostgresAsyncContext}
 import ru.tinkoff.fintech.stocks.db.{StocksPackage, User}
@@ -8,13 +10,14 @@ import ru.tinkoff.fintech.stocks.exception.Exceptions.ValidationException
 import scala.concurrent.{ExecutionContext, Future}
 
 class TransactionDao(implicit context: PostgresAsyncContext[Escape],
-                     exctx: ExecutionContext,
                      system: ActorSystem) {
 
   import akka.event.Logging
   import context._
 
   val log = Logging.getLogger(system, this)
+
+ implicit val  exct=ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
 
   def transactionBuy(idStock: Long, idUser: Long, price: Double, count: Int): Future[Unit] = {
     val bag = StocksPackage(None, idUser, idStock, count)
