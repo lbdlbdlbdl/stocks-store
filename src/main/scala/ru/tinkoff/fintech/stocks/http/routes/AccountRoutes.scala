@@ -17,17 +17,13 @@ class AccountRoutes extends FailFastCirceSupport {
     import io.circe.generic.auto._
 
     pathPrefix("api" / "account") {
-      path("info") {
-        authenticated { claim =>
-          get {
-            val login = getLoginFromClaim(claim)
-//            log.info(s"get account info for user: $login")
-            complete {
-              for {
-                accountInfo <- env.userService.accountInfo(login)
-              } yield StatusCodes.OK -> accountInfo
-            }
-          }
+      (get & authenticated & path("info")) { claim =>
+        val login = getLoginFromClaim(claim)
+        //            log.info(s"get account info for user: $login")
+        complete {
+          for {
+            accountInfo <- env.userService.accountInfo(login)
+          } yield StatusCodes.OK -> accountInfo
         }
       }
     }

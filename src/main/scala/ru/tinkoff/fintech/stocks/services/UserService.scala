@@ -2,6 +2,8 @@ package ru.tinkoff.fintech.stocks.services
 
 import akka.actor.ActorSystem
 import akka.event.Logging
+import cats.data.OptionT
+import cats.implicits._
 import ru.tinkoff.fintech.stocks.db.models._
 //{Stock, StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
@@ -34,7 +36,7 @@ class UserService(stocksService: StocksService)
   def createUser(login: String, password: String): Future[Token] =
     for {
       maybeUser <- userDao.find(login)
-      user <- //todo
+      user <- //todo: OptionT ?
         if (maybeUser.isDefined) throw ValidationException("User already exists.")
         else userDao.add(newUser(login, password))
       _ <- addStocksForNewUser(user)
@@ -46,9 +48,9 @@ class UserService(stocksService: StocksService)
     for {
       maybeUser <- userDao.find(login)
       maybeValidUser = maybeUser.filter(user => user.passwordHash == User.dummyHash(providedPassword))
-      user <- maybeValidUser match {
-        case Some(user) => Future.successful(user)
-        case _ => Future.failed(UnauthorizedException("Username and password combination not found."))
+      user = maybeValidUser match {
+        case Some(usr) => usr
+        case _ => throw UnauthorizedException("Username and password combination not found.")
       }
     } yield getTokensForUser(user)
 
@@ -62,11 +64,13 @@ class UserService(stocksService: StocksService)
 
   def accountInfo(login: String): Future[AccountInfo] =
     for {
-      maybeUser <- userDao.find(login)
-      user = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      stocksPackage <- stocksPackageDao.find(user.id.get, false)
+      user <- OptionT(userDao.find(login)).getOrElse(throw NotFoundException("User not found."))
+      userId <- OptionT.fromOption(user.id) //TODO: check it
+      //      user = maybeUser.getOrElse(throw NotFoundException("User not found."))
+      stocksPackage <- stocksPackageDao.find(userId, with0count = false)
       stockBatches <- stocksService.stockPackages2StockBatches(stocksPackage)
-    } yield AccountInfo(login, user.balance, stockBatches)
+    } yield //user).getOrElse(throw NotFoundException("User not found."))
+      AccountInfo(login, user.balance, stockBatches)
 
 
 }

@@ -21,7 +21,6 @@ class TransactionHistoryDao {
     }).map(newId => history.copy(id = newId))
   }
 
-
   def getLastId: Future[Option[Long]] = {
     run(quote {
       query[TransactionHistory].map(s => s.id).max

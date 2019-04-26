@@ -8,6 +8,7 @@ import cats.data.Reader
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe._
 import io.circe.parser._
+import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
 import ru.tinkoff.fintech.stocks.http.dtos.Requests.RangeHistory
@@ -23,33 +24,25 @@ class StockRoutes extends FailFastCirceSupport {
 
     pathPrefix("api" / "stocks") {
       get {
-        path(IntNumber / "history") { stockId =>
-          parameters(
-            "range".?
-          ).as(RangeHistory) { params =>
-            complete {
-              for {
-                priceHistory <- env.stocksService.stockPriceHistory(params.range.getOrElse("week"), stockId)
-              } yield StatusCodes.OK -> priceHistory
-            }
+        (path(IntNumber / "history") & parameters("range".?).as(RangeHistory)) { (stockId, params) =>
+          complete {
+            for {
+              priceHistory <- env.stocksService.stockPriceHistory(params.range.getOrElse("week"), stockId)
+            } yield StatusCodes.OK -> priceHistory
           }
-        } ~
-          parameters(
-            "search".?,
-            "count".as[Int] ?,
-            "itemId".as[Int] ?
-          ).as(Requests.PageParameters) { params =>
-            complete {
-              for {
-                stocksPage <- env.stocksService
-                  .stocksPage(
-                    params.search.getOrElse(""),
-                    params.count.getOrElse(10),
-                    params.itemId.getOrElse(1))
-              } yield StatusCodes.OK -> stocksPage
-            }
+        }
+      } ~
+        paginationParams { params =>
+          complete {
+            for {
+              stocksPage <- env.stocksService
+                .stocksPage(
+                  params.search.getOrElse(""),
+                  params.count.getOrElse(10),
+                  params.itemId.getOrElse(1))
+            } yield StatusCodes.OK -> stocksPage
           }
-      }
+        }
     }
   }
 }

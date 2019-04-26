@@ -10,7 +10,7 @@ class StocksPackageDao {
   import quillContext._
 
   def find(userId: Long, with0count: Boolean): Future[List[StocksPackage]] = {
-    if (with0count)
+    if (with0count) //TODO:
       run(quote {
         query[StocksPackage]
           .filter(_.userId == lift(userId))

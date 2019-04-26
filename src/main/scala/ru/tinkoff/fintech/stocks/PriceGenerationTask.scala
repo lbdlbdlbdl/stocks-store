@@ -1,13 +1,12 @@
 package ru.tinkoff.fintech.stocks
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{LocalDateTime}
 
 import akka.actor.ActorSystem
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models.PriceHistory
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 //Со случайным интервалом сервер генерирует текущие цены для каждого элемента из списка акций.
@@ -27,12 +26,14 @@ class PriceGenerationTask(stockDao: StockDao,
   actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = timeInterval.minute) {
     for {
       ids <- stockDao.idsList()
-      update = ids.foreach(id => {
-        val sellPrice = price + priceDifference
-        val buyPrice = sellPrice
-        stockDao.updatePrices(id, buyPrice, sellPrice)
-        priceHistoryDao.add(PriceHistory(None, id, LocalDateTime.now(), sellPrice, buyPrice))
-      })
+      update = ids
+        .grouped(20)
+        .foreach(group => group.foreach(id => {
+          val sellPrice = price + priceDifference
+          val buyPrice = sellPrice
+          stockDao.updatePrices(id, buyPrice, sellPrice)
+          priceHistoryDao.add(PriceHistory(None, id, LocalDateTime.now(), sellPrice, buyPrice))
+        }))
     } yield ()
   }
 }

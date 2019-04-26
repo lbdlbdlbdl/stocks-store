@@ -32,8 +32,8 @@ object Server {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-//    flyway.clean()
-//    flyway.baseline()
+    //    flyway.clean()
+    //    flyway.baseline()
     flyway.migrate()
   }
 
@@ -45,8 +45,8 @@ object Server {
 
     applyMigrations(jdbcUrl)
 
-//    implicit val quillContext: PostgresAsyncContext[Escape] =
-//      new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
+    //    implicit val quillContext: PostgresAsyncContext[Escape] =
+    //      new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
 
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
@@ -75,8 +75,8 @@ object Server {
     val userService = new UserService(stocksService)
     val transactionService = new TransactionService()
 
-    //singleton style
-    val newEnv = Env(userService, stocksService, transactionService)
+
+    val newEnv = Env(userService, stocksService, transactionService) //singleton style
 
     val allRoutes = {
 
@@ -84,26 +84,22 @@ object Server {
       import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
       val routes = new AllRoutes(newEnv).routes
-
       val corsSettings = CorsSettings.defaultSettings.withAllowedOrigins(HttpOriginMatcher.`*`)
+      val withCors = cors(corsSettings)
+      val withErrorHandling = handleExceptions(CustomExceptionHandler)
 
-      withLogging {
-        cors(corsSettings) {
-          handleExceptions(CustomExceptionHandler) {
-            routes
-          }
-        }
+      (withLogging & withCors & withErrorHandling) {
+        routes
+      }
+
+      def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
+
+      initializeTask()
+
+          Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+      //Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+        case Failure(err) => err.printStackTrace(); system.terminate()
+
       }
     }
-
-    def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
-
-    initializeTask()
-
-    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-      //    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
-      case Failure(err) => err.printStackTrace(); system.terminate()
-
-    }
   }
-}

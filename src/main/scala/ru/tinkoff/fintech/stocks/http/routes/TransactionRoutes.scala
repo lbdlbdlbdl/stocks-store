@@ -17,59 +17,46 @@ class TransactionRoutes extends FailFastCirceSupport {
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
 
-
     pathPrefix("api" / "transaction") {
       path("buy") {
-        authenticated { claim =>
-          post {
-            entity(as[Requests.Transaction]) { buy =>
-              val login = getLoginFromClaim(claim)
-              complete {
-                for {
-                  purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount)
-                } yield StatusCodes.OK -> purchase
-              }
+        (post & authenticated) { claim =>
+          entity(as[Requests.Transaction]) { buy =>
+            val login = getLoginFromClaim(claim)
+            complete {
+              for {
+                purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount)
+              } yield StatusCodes.OK -> purchase
+            }
+          }
+        }
+      }
+    } ~
+      path("sell") {
+        (post & authenticated) { claim =>
+          entity(as[Requests.Transaction]) { sell =>
+            val login = getLoginFromClaim(claim)
+            complete {
+              for {
+                sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount)
+              } yield StatusCodes.OK -> sale
             }
           }
         }
       } ~
-        path("sell") {
-          authenticated { claim =>
-            post {
-              entity(as[Requests.Transaction]) { sell =>
-                val login = getLoginFromClaim(claim)
-                complete {
-                  for {
-                    sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount)
-                  } yield StatusCodes.OK -> sale
-                }
-              }
-            }
-          }
-        } ~
-        path("history") {
-          authenticated { claim =>
-            get {
-              parameters(
-                "search".?,
-                "count".as[Int] ?,
-                "itemId".as[Int] ?
-              ).as(Requests.PageParameters) { params =>
-                //logger.info(s"begin get transaction history page")
-                val login = getLoginFromClaim(claim)
-                complete {
-                  for {
-                    transactionHistoryPage <- env.transactionService.transactionHistoryPage(
-                      login,
-                      params.search.getOrElse(""),
-                      params.count.getOrElse(10),
-                      params.itemId.getOrElse(1))
-                  } yield StatusCodes.OK -> transactionHistoryPage
-                }
-              }
-            }
+      path("history") {
+        (get & authenticated & paginationParams) { (claim, params) =>
+          //logger.info(s"begin get transaction history page")
+          val login = getLoginFromClaim(claim)
+          complete {
+            for {
+              transactionHistoryPage <- env.transactionService.transactionHistoryPage(
+                login,
+                params.search.getOrElse(""),
+                params.count.getOrElse(10),
+                params.itemId.getOrElse(1))
+            } yield StatusCodes.OK -> transactionHistoryPage
           }
         }
-    }
+      }
   }
 }
