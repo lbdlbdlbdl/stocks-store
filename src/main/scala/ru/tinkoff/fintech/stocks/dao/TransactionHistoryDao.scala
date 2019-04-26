@@ -1,16 +1,13 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import akka.actor.ActorSystem
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.{Stock, TransactionHistory}
+import ru.tinkoff.fintech.stocks.db.models.{Stock, TransactionHistory}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
-                            implicit val exctx: ExecutionContext,
-                            implicit val system: ActorSystem) {
+class TransactionHistoryDao {
 
-  import context._
+  import quillContext._
 
   def find(login: String): Future[List[TransactionHistory]] = {
     run(quote {
@@ -22,6 +19,12 @@ class TransactionHistoryDao(implicit val context: PostgresAsyncContext[Escape],
     run(quote {
       query[TransactionHistory].insert(lift(history)).returning(_.id)
     }).map(newId => history.copy(id = newId))
+  }
+
+  def getLastId: Future[Option[Long]] = {
+    run(quote {
+      query[TransactionHistory].map(s => s.id)
+    }).map(_.head)
   }
 
   def getLastId: Future[Long] = {

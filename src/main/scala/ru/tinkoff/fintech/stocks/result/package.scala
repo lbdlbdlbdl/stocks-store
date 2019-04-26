@@ -7,7 +7,6 @@ import scala.concurrent.Future
 package object result {
 
   type Result[T] = ReaderT[Future, Env, T]
-
   //FutureEither for error handling
 
   object Result {

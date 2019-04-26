@@ -2,35 +2,43 @@ package ru.tinkoff.fintech.stocks.services
 
 import java.time.LocalDateTime
 
-import cats.data.ReaderT
-import ru.tinkoff.fintech.stocks.db._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
+import ru.tinkoff.fintech.stocks.http.dtos.Responses._
+
+import scala.concurrent.Future
+import java.time.LocalDateTime
+
 import ru.tinkoff.fintech.stocks.http.JwtHelper
-import ru.tinkoff.fintech.stocks.http.dtos.Responses
-import ru.tinkoff.fintech.stocks.result.Result
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import ru.tinkoff.fintech.stocks.dao.{StockDao, StocksPackageDao, TransactionHistoryDao, UserDao}
+import ru.tinkoff.fintech.stocks.db.models._
+
+import scala.util.Success
 
 case class Companion(user: User, bag: Option[StocksPackage], stock: Stock)
 
-class TransactionService extends JwtHelper {
+class TransactionService(implicit val userDao: UserDao,
+                         val stockDao: StockDao,
+                         val stocksPackageDao: StocksPackageDao,
+                         val transactionHistoryDao: TransactionHistoryDao) {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
-  def companion(login: String, stockId: Long, amount: Int): Result[Companion] = ReaderT { env =>
-    if (amount < 1) throw ValidationException("Amount must be more than 0.")
+  def companion(login: String, stockId: Long, amount: Int): Future[Companion] = {
+  if (amount < 1) throw ValidationException("Amount must be more than 0.")
     for {
-      maybeUser <- env.userDao.find(login)
+      maybeUser <- userDao.find(login)
       userInfo = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      maybeStock <- env.stockDao.getStockOption(stockId)
+      maybeStock <- stockDao.getStockOption(stockId)
       stock = maybeStock.getOrElse(throw NotFoundException(s"Stock not found id=$stockId."))
-      bag <- env.stocksPackageDao.findByStock(userInfo.id.get, stockId)
+      bag <- stocksPackageDao.findByStock(userInfo.id.get, stockId)
     } yield Companion(userInfo, bag, stock)
-  }
+
+    }
 
   private def timeNow = LocalDateTime.now()
 
-  def transaction(act: String, login: String, stockId: Long, amount: Int): Result[Responses.TransactionSuccess] = ReaderT { env =>
+  def transaction(act: String, login: String, stockId: Long, amount: Int): Future[TransactionSuccess] = {
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int).run(env)
       price = cmp.stock.buyPrice * amount
@@ -63,18 +71,5 @@ class TransactionService extends JwtHelper {
 
     } yield Responses.TransactionHistoryPage(lastId, itemId, responses)
   }
-
-  //  def stocksPage(searchStr: String, count: Int, itemId: Int): Result[Responses.TransactionHistoryPage] = ReaderT { env =>
-  //    env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
-  //    for {
-  //      stocksPage <- env.stockDao.getPagedQueryWithFind(searchStr, itemId - 1, count + 1)
-  //      stocksSize <- env.stockDao.getLastId
-  //
-  //      stocksPageLastId = stocksPage.last.id
-  //      lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
-  //    } yield Responses.StocksPage(
-  //      lastId, itemId,
-  //      stocksPage.take(count).map(s => s.as[Responses.Stock]))
-  //  }
 
 }

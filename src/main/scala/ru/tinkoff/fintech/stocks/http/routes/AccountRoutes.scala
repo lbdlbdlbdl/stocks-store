@@ -20,10 +20,10 @@ class AccountRoutes extends FailFastCirceSupport with JwtHelper {
         authenticated { claim =>
           get {
             val login = getLoginFromClaim(claim)
-            //            log.info(s"get account info for user: $login")
+//            log.info(s"get account info for user: $login")
             complete {
               for {
-                accountInfo <- env.userService.accountInfo(login).run(env)
+                accountInfo <- env.userService.accountInfo(login)
               } yield StatusCodes.OK -> accountInfo
             }
           }

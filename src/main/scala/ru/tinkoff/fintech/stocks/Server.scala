@@ -4,24 +4,26 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.event.Logging.LogLevel
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.LogEntry
 import akka.stream.{ActorMaterializer, Materializer}
 import ch.megard.akka.http.cors.scaladsl.model.HttpOriginMatcher
+import ch.megard.akka.http.cors.scaladsl.settings
 import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import com.typesafe.config.ConfigFactory
 import io.getquill.{Escape, PostgresAsyncContext}
 import org.flywaydb.core.Flyway
 import ru.tinkoff.fintech.stocks.dao._
-import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.routes._
+import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.services._
 
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
 
-object Server extends JwtHelper {
+object Server {
 
   def applyMigrations(jdbcUrl: String): Unit = {
     import org.postgresql.ds.PGSimpleDataSource
@@ -30,8 +32,8 @@ object Server extends JwtHelper {
     dataSource.setURL(jdbcUrl)
 
     val flyway = Flyway.configure.dataSource(dataSource).load()
-    //        flyway.clean()
-    //        flyway.baseline()
+//    flyway.clean()
+//    flyway.baseline()
     flyway.migrate()
   }
 
@@ -45,6 +47,8 @@ object Server extends JwtHelper {
 
     implicit val quillContext: PostgresAsyncContext[Escape] =
       new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
+
+
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()
@@ -60,17 +64,24 @@ object Server extends JwtHelper {
       logRequest(requestMethodAs(Logging.InfoLevel) _)
     }
 
+    implicit val logger = Logging.getLogger(system, this)
+    implicit val userDao = new UserDao()
+    implicit val stockDao = new StockDao()
+    implicit val stocksPackageDao = new StocksPackageDao()
+    implicit val transactionHistoryDao = new TransactionHistoryDao()
+    implicit val priceHistoryDao = new PriceHistoryDao()
+
+    val stocksService = new StocksService()
+    val userService = new UserService(stocksService)
+    val transactionService = new TransactionService()
+
     //singleton style
-    val newEnv = Env(
-      Logging.getLogger(system, this),
-      new UserService(), new StocksService(), new TransactionService(),
-      new UserDao(), new StockDao(), new StocksPackageDao(), new TransactionHistoryDao(),
-      new PriceHistoryDao(), new TransactionDao())
+    val newEnv = Env(userService, stocksService, transactionService)
 
     val allRoutes = {
 
-      import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
       import ru.tinkoff.fintech.stocks.exception.ExceptionHandlers._
+      import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 
       val routes = new AllRoutes(newEnv).routes
 
@@ -85,12 +96,12 @@ object Server extends JwtHelper {
       }
     }
 
-    def initializeTask(): Unit = new PriceGenerationTask(newEnv.stockDao, newEnv.priceHistoryDao)
+    def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
 
     initializeTask()
 
-            Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-//    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+    Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+      //    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
       case Failure(err) => err.printStackTrace(); system.terminate()
 
     }

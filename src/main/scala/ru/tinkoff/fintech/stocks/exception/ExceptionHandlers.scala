@@ -5,7 +5,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.Directives.{complete, extractUri}
 import akka.http.scaladsl.server.ExceptionHandler
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import ru.tinkoff.fintech.stocks.exception.Exceptions._
+import Exceptions._
 
 object ExceptionHandlers extends FailFastCirceSupport {
   import io.circe.generic.auto._
