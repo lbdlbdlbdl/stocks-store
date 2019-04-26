@@ -1,14 +1,13 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.Stock
+import ru.tinkoff.fintech.stocks.db.models.Stock
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class StockDao(implicit val context: PostgresAsyncContext[Escape],
-               implicit val exctx: ExecutionContext) {
+class StockDao{
 
-  import context._
+  import quillContext._
 
   //найдем описание акции
   def getStock(id: Long): Future[Stock] = {
@@ -23,6 +22,12 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
     }).map(_.headOption)
   }
 
+  def getLastId: Future[Long] = {
+    run(quote {
+      query[Stock].map(s => s.id).max
+    }).map(_.head)
+  }
+
   def idsList(): Future[List[Long]] = {
     run(quote {
       query[Stock].map(_.id)
@@ -30,14 +35,12 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
   }
 
   def updatePrices(id: Long, buyPrice: Double, sellPrice: Double): Future[Unit] = {
-    Future {
       run(
         //        quote(infix"UPDATE Stock SET buyPrice = $buyPrice, salePrice = $sellPrice WHERE id = $id")
         quote {
           query[Stock].filter(_.id == lift(id)).update(_.salePrice -> lift(sellPrice), _.buyPrice -> lift(buyPrice))
         }
-      )
-    }
+      ).map(_ => ())
   }
 
   def findStrInName(str: String): Future[List[Stock]] = {
@@ -50,7 +53,7 @@ class StockDao(implicit val context: PostgresAsyncContext[Escape],
     run(quote {
       query[Stock]
         .drop(lift(offset - 1))
-        .filter(s => s.name.toLowerCase like s"%${lift(searchedStr.toLowerCase)}%")
+        .filter(s => s.name.toLowerCase like lift(searchedStr.toLowerCase))//s"%${lift(searchedStr.toLowerCase)}%")
         .take(lift(querySize))
     })
   }

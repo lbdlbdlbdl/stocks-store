@@ -1,16 +1,13 @@
 package ru.tinkoff.fintech.stocks.dao
 
-import akka.actor.ActorSystem
-import io.getquill.{Escape, PostgresAsyncContext}
-import ru.tinkoff.fintech.stocks.db.PriceHistory
+import ru.tinkoff.fintech.stocks.db.models.PriceHistory
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class PriceHistoryDao(implicit val context: PostgresAsyncContext[Escape],
-                      implicit val exctx: ExecutionContext,
-                      implicit val system: ActorSystem) {
+class PriceHistoryDao {
 
-  import context._
+  import quillContext._
 
   def find(idStock: Long): Future[List[PriceHistory]] = {
     run(quote {

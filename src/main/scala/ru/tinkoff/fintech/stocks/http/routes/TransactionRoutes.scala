@@ -8,10 +8,11 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests
+import JwtHelper._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
+class TransactionRoutes extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -60,7 +61,7 @@ class TransactionRoutes extends FailFastCirceSupport with JwtHelper {
                     transactionHistoryPage <- env.transactionService.transactionHistoryPage(
                       params.search.getOrElse(""),
                       params.count.getOrElse(10),
-                      params.itemId.getOrElse(1)).run(env)
+                      params.itemId.getOrElse(1))
                   } yield StatusCodes.OK -> transactionHistoryPage
                 }
               }
