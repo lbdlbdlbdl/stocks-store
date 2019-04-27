@@ -3,12 +3,14 @@ package ru.tinkoff.fintech.stocks.dao
 import ru.tinkoff.fintech.stocks.db.models.{StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions.ValidationException
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import scala.concurrent.duration._
 class TransactionDao {
 
   import quillContext._
+
+  def Aw [T] (G:T) =Await.ready(run(G), 0.nanos)
 
   def transactionBuy(idStock: Long, idUser: Long, price: Double, count: Int): Future[Unit] = {
     val bag = StocksPackage(None, idUser, idStock, count)
@@ -29,9 +31,9 @@ class TransactionDao {
 
     transaction { implicit ec =>
       for {
-        upd <- run(updateSt)
+        upd <- Aw(run(updateSt))
         _ <- if (upd == 0) run(addSt).map(newId => bag.copy(id = newId)) else Future.unit
-        bal <- run(updateBal)
+        bal <- Aw(run(updateBal))
       } yield {
         if (bal == 0) throw ValidationException("Insufficient funds in the account"); ()
       }
@@ -51,11 +53,10 @@ class TransactionDao {
         ent => ent.balance -> (ent.balance + lift(price))
       }
     }
-
     transaction { implicit ec =>
       for {
-        upd <- run(updateSt)
-        _ <- run(updateBal)
+        upd <- Aw(run(updateSt))
+        _ <- Aw(run(updateBal))
       } yield {
         if (upd == 0) throw ValidationException("Not enough shares in the account"); ()
       }

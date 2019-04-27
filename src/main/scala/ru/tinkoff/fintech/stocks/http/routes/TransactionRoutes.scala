@@ -31,8 +31,7 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
           }
         }
       }
-    } ~
-      path("sell") {
+      ~path("sell") {
         (post & authenticated) { claim =>
           entity(as[Requests.Transaction]) { sell =>
             val login = getLoginFromClaim(claim)
@@ -44,20 +43,21 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
           }
         }
       } ~
-      path("history") {
-        (get & authenticated & paginationParams) { (claim, params) =>
-          logger.info(s"begin get transaction history page")
-          val login = getLoginFromClaim(claim)
-          complete {
-            for {
-              transactionHistoryPage <- env.transactionService.transactionHistoryPage(
-                login,
-                params.search.getOrElse(""),
-                params.count.getOrElse(10),
-                params.itemId.getOrElse(1))
-            } yield StatusCodes.OK -> transactionHistoryPage
+        path("history") {
+          (get & authenticated & paginationParams) { (claim, params) =>
+            logger.info(s"begin get transaction history page")
+            val login = getLoginFromClaim(claim)
+            complete {
+              for {
+                transactionHistoryPage <- env.transactionService.transactionHistoryPage(
+                  login,
+                  params.search.getOrElse(""),
+                  params.count.getOrElse(10),
+                  params.itemId.getOrElse(1))
+              } yield StatusCodes.OK -> transactionHistoryPage
+            }
           }
         }
-      }
+    }
   }
 }
