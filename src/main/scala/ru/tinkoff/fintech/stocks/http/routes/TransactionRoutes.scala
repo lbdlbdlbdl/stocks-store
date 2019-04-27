@@ -30,8 +30,8 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
             }
           }
         }
-      }
-      ~path("sell") {
+      }~
+        path("sell") {
         (post & authenticated) { claim =>
           entity(as[Requests.Transaction]) { sell =>
             val login = getLoginFromClaim(claim)

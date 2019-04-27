@@ -10,7 +10,7 @@ class TransactionDao {
 
   import quillContext._
 
-  def Aw [T] (G:T) =Await.ready(run(G), 0.nanos)
+ // def Aw [T] (G:T) =Await.ready(run(G), 0.nanos)
 
   def transactionBuy(idStock: Long, idUser: Long, price: Double, count: Int): Future[Unit] = {
     val bag = StocksPackage(None, idUser, idStock, count)
@@ -31,9 +31,9 @@ class TransactionDao {
 
     transaction { implicit ec =>
       for {
-        upd <- Aw(run(updateSt))
+        upd <- run(updateSt)
         _ <- if (upd == 0) run(addSt).map(newId => bag.copy(id = newId)) else Future.unit
-        bal <- Aw(run(updateBal))
+        bal <- run(updateBal)
       } yield {
         if (bal == 0) throw ValidationException("Insufficient funds in the account"); ()
       }
@@ -55,8 +55,8 @@ class TransactionDao {
     }
     transaction { implicit ec =>
       for {
-        upd <- Aw(run(updateSt))
-        _ <- Aw(run(updateBal))
+        upd <- run(updateSt)
+        _ <- run(updateBal)
       } yield {
         if (upd == 0) throw ValidationException("Not enough shares in the account"); ()
       }
