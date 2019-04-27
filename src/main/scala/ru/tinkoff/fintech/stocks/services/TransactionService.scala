@@ -6,13 +6,18 @@ import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 import scala.concurrent.Future
 import java.time.LocalDateTime
 
+import akka.event.LoggingAdapter
+import cats.data.OptionT
+import cats.instances.future._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.db.models._
 
 case class Companion(user: User, bag: Option[StocksPackage], stock: Stock)
 
-class TransactionService(implicit val userDao: UserDao,
+class TransactionService(implicit val logger: LoggingAdapter,
+                         val userDao: UserDao,
                          val stockDao: StockDao,
                          val stocksPackageDao: StocksPackageDao,
                          val transactionDao: TransactionDao,
@@ -22,12 +27,10 @@ class TransactionService(implicit val userDao: UserDao,
   def companion(login: String, stockId: Long, amount: Int): Future[Companion] = {
     if (amount < 1) throw ValidationException("Amount must be more than 0.")
     for {
-      maybeUser <- userDao.find(login)
-      userInfo = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      maybeStock <- stockDao.getStockOption(stockId)
-      stock = maybeStock.getOrElse(throw NotFoundException(s"Stock not found id=$stockId."))
-      bag <- stocksPackageDao.findByStock(userInfo.id.get, stockId)
-    } yield Companion(userInfo, bag, stock)
+      user <- OptionT(userDao.find(login)).getOrElse(throw NotFoundException("User not found."))
+      stock <- OptionT(stockDao.getStockOption(stockId)).getOrElse(throw NotFoundException(s"Stock not found id=$stockId."))
+      bag <- stocksPackageDao.findByStock(user.id.get, stockId)
+    } yield Companion(user, bag, stock)
   }
 
   private def timeNow = LocalDateTime.now()
@@ -53,7 +56,7 @@ class TransactionService(implicit val userDao: UserDao,
 
 
   def transactionHistoryPage(login: String, searchStr: String, count: Int, itemId: Int): Future[TransactionHistoryPage] = {
-//    logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
+    logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       historiesPage <- transactionHistoryDao.getPagedQueryWithFind(login, searchStr, itemId - 1, count + 1)
       historiesSize <- transactionHistoryDao.getLastId

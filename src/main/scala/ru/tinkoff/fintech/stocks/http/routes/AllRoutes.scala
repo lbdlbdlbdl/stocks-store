@@ -1,10 +1,11 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
+import akka.event.LoggingAdapter
 import akka.http.scaladsl.server.Directives._
-
 import ru.tinkoff.fintech.stocks.Env
 
-class AllRoutes(env: Env) {
+class AllRoutes(env: Env)
+               (implicit logger: LoggingAdapter) {
 
   val ur = new UserRoutes().route.run(env) //very simple monadic way
   val ar = new AccountRoutes().route.run(env)

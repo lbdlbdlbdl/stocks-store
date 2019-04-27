@@ -78,7 +78,7 @@ object Server {
 
     val newEnv = Env(userService, stocksService, transactionService) //singleton style
 
-    val allRoutes = {
+    val allRoutes: Route = {
 
       import ru.tinkoff.fintech.stocks.exception.ExceptionHandlers._
       import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
@@ -91,15 +91,15 @@ object Server {
       (withLogging & withCors & withErrorHandling) {
         routes
       }
+    }
 
-      def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
+    def initializeTask(): Unit = new PriceGenerationTask(stockDao, priceHistoryDao)
 
-      initializeTask()
+    initializeTask()
 
-          Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
-      //Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
-        case Failure(err) => err.printStackTrace(); system.terminate()
-
-      }
+    //      Http().bindAndHandle(allRoutes, interface = "0.0.0.0", port = port) andThen {
+    Http().bindAndHandle(allRoutes, "localhost", 8081) andThen {
+      case Failure(err) => err.printStackTrace(); system.terminate()
     }
   }
+}

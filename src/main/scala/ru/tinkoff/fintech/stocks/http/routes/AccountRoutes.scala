@@ -8,10 +8,11 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.http._
 import JwtHelper._
+import akka.event.LoggingAdapter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class AccountRoutes extends FailFastCirceSupport {
+class AccountRoutes(implicit val logger: LoggingAdapter) extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -19,7 +20,7 @@ class AccountRoutes extends FailFastCirceSupport {
     pathPrefix("api" / "account") {
       (get & authenticated & path("info")) { claim =>
         val login = getLoginFromClaim(claim)
-        //            log.info(s"get account info for user: $login")
+        logger.info(s"get account info for user: $login")
         complete {
           for {
             accountInfo <- env.userService.accountInfo(login)

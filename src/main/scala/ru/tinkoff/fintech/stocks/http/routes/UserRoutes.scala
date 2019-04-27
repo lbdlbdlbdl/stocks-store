@@ -1,7 +1,7 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
 import akka.actor.ActorSystem
-import akka.event.Logging
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
 import akka.http.scaladsl.server.Directives._
@@ -15,7 +15,7 @@ import ru.tinkoff.fintech.stocks.result.Result
 import scala.concurrent.ExecutionContext.Implicits.global
 import JwtHelper._
 
-class UserRoutes extends FailFastCirceSupport {
+class UserRoutes(implicit val logger: LoggingAdapter) extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -24,7 +24,7 @@ class UserRoutes extends FailFastCirceSupport {
       path("signup") {
         post {
           entity(as[Requests.UserRequest]) { user =>
-//            env.logger.info(s"begin signup, user: $user")
+            logger.info(s"begin signup, user: $user")
             complete {
               for {
                 tokens <- env.userService.createUser(user.login, user.password)
@@ -36,7 +36,7 @@ class UserRoutes extends FailFastCirceSupport {
         path("signin") {
           post {
             entity(as[Requests.UserRequest]) { user =>
-//              env.logger.info(s"begin signin, user: $user")
+              logger.info(s"begin signin, user: $user")
               complete {
                 for {
                   tokens <- env.userService.authenticate(user.login, user.password)
@@ -48,7 +48,7 @@ class UserRoutes extends FailFastCirceSupport {
         path("refresh") {
           post {
             entity(as[Requests.RefreshToken]) { refreshToken =>
-//              env.logger.info(s"begin refresh token")
+              logger.info(s"begin refresh token")
               complete {
                 for {
                   tokens <- env.userService.refreshTokens(refreshToken.refreshToken)

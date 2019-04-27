@@ -2,6 +2,9 @@ package ru.tinkoff.fintech.stocks.services
 
 import java.time.LocalDate
 
+import akka.event.LoggingAdapter
+import cats.data.OptionT
+import cats.instances.future._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 
@@ -10,9 +13,8 @@ import scala.concurrent.Future
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models._
 
-import scala.util.{Failure, Success}
-
-class StocksService(implicit val stockDao: StockDao,
+class StocksService(implicit val logger: LoggingAdapter,
+                    val stockDao: StockDao,
                     val priceHistoryDao: PriceHistoryDao) {
 
   def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Future[List[StockBatch]] =
@@ -39,7 +41,7 @@ class StocksService(implicit val stockDao: StockDao,
     } yield StockBatch(s.id, s.code, s.name, s.iconUrl, s.salePrice, deltaPrice, count)
 
   def stocksPage(searchStr: String, count: Int, itemId: Int): Future[StocksPage] = {
-    //    env.logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
+    logger.info(s"begin get stocks page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       stocksPage <- stockDao.getPagedQueryWithFind(searchStr, itemId - 1, count + 1)
       stocksSize <- stockDao.getLastId
@@ -47,11 +49,8 @@ class StocksService(implicit val stockDao: StockDao,
       stocksPageLastId = stocksPage.last.id
       lastId = if (stocksPageLastId == stocksSize) 0 else stocksPageLastId // ? x: y doesnt work
 
-      stocksRes <-  Future.sequence(stocksPage.take(count).map(s => stock2StockResponse(s)))
-    } yield StocksPage(
-      lastId, itemId,
-      stocksRes)
-    //      stocksPage.take(count).map(s => StockResponse(s.id, s.name, s.code, s.iconUrl, s.buyPrice, 0.0)))
+      stocksRes <- Future.sequence(stocksPage.take(count).map(s => stock2StockResponse(s)))
+    } yield StocksPage(lastId, itemId, stocksRes)
   }
 
   private def date = LocalDate.now()
@@ -85,10 +84,9 @@ class StocksService(implicit val stockDao: StockDao,
   }
 
   def stockPriceHistory(range: String, id: Long): Future[PriceHistoryResponse] = {
-    //    env.logger.info(s"begin get price history per share id=$id during the period=$range")
+    logger.info(s"begin get price history per share id=$id during the period=$range")
     for {
-      stockOption <- stockDao.getStockOption(id)
-      stock = stockOption.getOrElse(throw NotFoundException(s"Stock not found id=$id."))
+      stock <- OptionT(stockDao.getStockOption(id)).getOrElse(throw NotFoundException(s"Stock not found id=$id."))
 
       dateFrom = fromDate(range)
       listHistory <- priceHistoryDao.find(id)

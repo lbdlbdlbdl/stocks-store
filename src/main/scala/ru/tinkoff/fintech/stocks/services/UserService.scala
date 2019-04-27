@@ -1,25 +1,27 @@
 package ru.tinkoff.fintech.stocks.services
 
 import akka.actor.ActorSystem
-import akka.event.Logging
+import akka.event.{Logging, LoggingAdapter}
 import cats.data.OptionT
-import cats.implicits._
+import cats.instances.future.catsStdInstancesForFuture
+import cats.Functor
+import cats.instances.future._
+import cats.implicits.catsKernelStdOrderForFiniteDuration
+//import cats.implicits._
 import ru.tinkoff.fintech.stocks.db.models._
-//{Stock, StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 import ru.tinkoff.fintech.stocks.http.dtos.Requests._
-import ru.tinkoff.fintech.stocks.result.Result
 import JwtHelper._
-import ru.tinkoff.fintech.stocks.Env
 import ru.tinkoff.fintech.stocks.dao.{StocksPackageDao, UserDao}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class UserService(stocksService: StocksService)
-                 (implicit val userDao: UserDao,
+                 (implicit val logger: LoggingAdapter,
+                  val userDao: UserDao,
                   val stocksPackageDao: StocksPackageDao) {
 
   private def newUser(login: String, password: String): User =
@@ -36,9 +38,10 @@ class UserService(stocksService: StocksService)
   def createUser(login: String, password: String): Future[Token] =
     for {
       maybeUser <- userDao.find(login)
-      user <- //todo: OptionT ?
-        if (maybeUser.isDefined) throw ValidationException("User already exists.")
-        else userDao.add(newUser(login, password))
+      user <- maybeUser match {
+        case Some(_) => throw ValidationException("User already exists.")
+        case None => userDao.add(newUser(login, password))
+      }
       _ <- addStocksForNewUser(user)
       tokens = getTokensForUser(user)
     } yield tokens
@@ -65,12 +68,9 @@ class UserService(stocksService: StocksService)
   def accountInfo(login: String): Future[AccountInfo] =
     for {
       user <- OptionT(userDao.find(login)).getOrElse(throw NotFoundException("User not found."))
-      userId <- OptionT.fromOption(user.id) //TODO: check it
-      //      user = maybeUser.getOrElse(throw NotFoundException("User not found."))
-      stocksPackage <- stocksPackageDao.find(userId, with0count = false)
+      stocksPackage <- stocksPackageDao.find(user.id.get, with0count = false)
       stockBatches <- stocksService.stockPackages2StockBatches(stocksPackage)
-    } yield //user).getOrElse(throw NotFoundException("User not found."))
-      AccountInfo(login, user.balance, stockBatches)
+    } yield AccountInfo(login, user.balance, stockBatches)
 
 
 }
