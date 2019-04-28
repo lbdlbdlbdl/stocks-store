@@ -16,12 +16,12 @@ import ru.tinkoff.fintech.stocks.db.models._
 
 case class Companion(user: User, bag: Option[StocksPackage], stock: Stock)
 
-class TransactionService(implicit val logger: LoggingAdapter,
-                         val userDao: UserDao,
-                         val stockDao: StockDao,
-                         val stocksPackageDao: StocksPackageDao,
-                         val transactionDao: TransactionDao,
-                         val transactionHistoryDao: TransactionHistoryDao) {
+class TransactionService(userDao: UserDao,
+                         stockDao: StockDao,
+                         stocksPackageDao: StocksPackageDao,
+                         transactionDao: TransactionDao,
+                         transactionHistoryDao: TransactionHistoryDao)
+                        (implicit val logger: LoggingAdapter) {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
   def companion(login: String, stockId: Long, amount: Int): Future[Companion] = {
@@ -35,7 +35,13 @@ class TransactionService(implicit val logger: LoggingAdapter,
 
   private def timeNow = LocalDateTime.now()
 
-  def transaction(act: String, login: String, stockId: Long, amount: Int): Future[TransactionSuccess] = {
+  def buyStocks(implicit login: String, stockId: Long, amount: Int): Future[TransactionSuccess] =
+    transaction("buy")
+
+  def sellStocks(implicit login: String, stockId: Long, amount: Int): Future[TransactionSuccess] =
+    transaction("sell")
+
+  private def transaction(act: String)(implicit login: String, stockId: Long, amount: Int): Future[TransactionSuccess] = {
     for {
       cmp <- companion(login: String, stockId: Long, amount: Int)
       price = cmp.stock.buyPrice * amount
@@ -54,17 +60,22 @@ class TransactionService(implicit val logger: LoggingAdapter,
       StockHistory(stock.id, stock.code, stock.name, stock.iconUrl),
       value.amount, value.totalPrice, value.date, value.`type`)
 
-
   def transactionHistoryPage(login: String, searchStr: String, count: Int, itemId: Int): Future[TransactionHistoryPage] = {
     logger.info(s"begin get trans. history page, params: searchstr = $searchStr, count = $count, itemId = $itemId")
     for {
       historiesPage <- transactionHistoryDao.getPagedQueryWithFind(login, searchStr, itemId - 1, count + 1)
       historiesSize <- transactionHistoryDao.getLastId
 
-      historyPageLastId = historiesPage.last.id.get //TODO: remove get
-      lastId = if (historyPageLastId == historiesSize.get) 0 else historyPageLastId // ? x: y doesnt work
-
-      responses <- Future.sequence(historiesPage.take(count).map(th => transactionHistory2Response(th)))
+      lastId = historiesPage match {
+        case Nil => 1
+        case _ =>
+          val historyPageLastId = historiesPage.last.id.get
+          if (historyPageLastId == historiesSize.get) 0 else historyPageLastId
+      }
+      responses <- historiesPage match {
+        case Nil => Future.successful(Nil)
+        case _ => Future.sequence(historiesPage.take(count).map(th => transactionHistory2Response(th)))
+      }
     } yield TransactionHistoryPage(lastId, itemId, responses)
   }
 

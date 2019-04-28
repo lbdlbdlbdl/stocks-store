@@ -25,7 +25,7 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
             val login = getLoginFromClaim(claim)
             complete {
               for {
-                purchase <- env.transactionService.transaction("buy", login, buy.stockId, buy.amount)
+                purchase <- env.transactionService.buyStocks(login, buy.stockId, buy.amount)
               } yield StatusCodes.OK -> purchase
             }
           }
@@ -37,7 +37,7 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
             val login = getLoginFromClaim(claim)
             complete {
               for {
-                sale <- env.transactionService.transaction("sell", login, sell.stockId, sell.amount)
+                sale <- env.transactionService.sellStocks(login, sell.stockId, sell.amount)
               } yield StatusCodes.OK -> sale
             }
           }

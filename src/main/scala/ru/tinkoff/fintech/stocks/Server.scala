@@ -45,15 +45,9 @@ object Server {
 
     applyMigrations(jdbcUrl)
 
-    //    implicit val quillContext: PostgresAsyncContext[Escape] =
-    //      new PostgresAsyncContext(Escape, "ru.tinkoff.fintech.stocks.db")
-
     implicit val system: ActorSystem = ActorSystem()
     implicit val executionContext: ExecutionContext = system.dispatcher
     implicit val materializer: Materializer = ActorMaterializer()
-
-    //    implicit val logger = Logging(system, getClass)
-
 
     def requestMethodAs(logLevel: LogLevel)(req: HttpRequest) =
       LogEntry(s"${req.method.name} - ${req.uri} ${req.headers}", logLevel)
@@ -64,19 +58,19 @@ object Server {
     }
 
     implicit val logger = Logging.getLogger(system, this)
-    implicit val userDao = new UserDao()
-    implicit val stockDao = new StockDao()
-    implicit val stocksPackageDao = new StocksPackageDao()
-    implicit val transactionHistoryDao = new TransactionHistoryDao()
-    implicit val priceHistoryDao = new PriceHistoryDao()
-    implicit val transactionDao = new TransactionDao()
+    val userDao = new UserDao()
+    val stockDao = new StockDao()
+    val stocksPackageDao = new StocksPackageDao()
+    val transactionHistoryDao = new TransactionHistoryDao()
+    val priceHistoryDao = new PriceHistoryDao()
+    val transactionDao = new TransactionDao()
 
-    val stocksService = new StocksService()
-    val userService = new UserService(stocksService)
-    val transactionService = new TransactionService()
+    val stocksService = new StocksService(stockDao, priceHistoryDao)
+    val userService = new UserService(stocksService, userDao, stocksPackageDao)
+    val transactionService = new TransactionService(userDao, stockDao, stocksPackageDao, transactionDao, transactionHistoryDao)
 
 
-    val newEnv = Env(userService, stocksService, transactionService) //singleton style
+    val newEnv = Env(userService, stocksService, transactionService)
 
     val allRoutes: Route = {
 

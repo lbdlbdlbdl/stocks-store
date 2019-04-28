@@ -13,15 +13,15 @@ import scala.concurrent.Future
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models._
 
-class StocksService(implicit val logger: LoggingAdapter,
-                    val stockDao: StockDao,
-                    val priceHistoryDao: PriceHistoryDao) {
+class StocksService(stockDao: StockDao,
+                    priceHistoryDao: PriceHistoryDao)
+                   (implicit val logger: LoggingAdapter) {
 
   def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Future[List[StockBatch]] =
     Future.sequence(stocksPackages.map(sp => newStockBatch(stockDao.getStock(sp.stockId), sp.count)))
 
   def stock2StockResponse(stock: Stock): Future[StockResponse] = {
-    priceDelta(stock).map(d => StockResponse(stock.id, stock.name, stock.code, stock.iconUrl, stock.buyPrice, d))
+    priceDelta(stock).map(d => StockResponse(stock.id, stock.code, stock.name, stock.iconUrl, stock.buyPrice, d))
   }
 
   def priceDelta(stock: Stock): Future[Double] = {
