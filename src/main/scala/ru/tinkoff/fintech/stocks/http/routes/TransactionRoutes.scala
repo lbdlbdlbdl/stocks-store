@@ -11,9 +11,10 @@ import ru.tinkoff.fintech.stocks.http.dtos.Requests
 import JwtHelper._
 import akka.event.LoggingAdapter
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
-class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCirceSupport {
+class TransactionRoutes(implicit val ec: ExecutionContext,
+                        logger: LoggingAdapter) extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._
@@ -30,19 +31,19 @@ class TransactionRoutes(implicit val logger: LoggingAdapter) extends FailFastCir
             }
           }
         }
-      }~
+      } ~
         path("sell") {
-        (post & authenticated) { claim =>
-          entity(as[Requests.Transaction]) { sell =>
-            val login = getLoginFromClaim(claim)
-            complete {
-              for {
-                sale <- env.transactionService.sellStocks(login, sell.stockId, sell.amount)
-              } yield StatusCodes.OK -> sale
+          (post & authenticated) { claim =>
+            entity(as[Requests.Transaction]) { sell =>
+              val login = getLoginFromClaim(claim)
+              complete {
+                for {
+                  sale <- env.transactionService.sellStocks(login, sell.stockId, sell.amount)
+                } yield StatusCodes.OK -> sale
+              }
             }
           }
-        }
-      } ~
+        } ~
         path("history") {
           (get & authenticated & paginationParams) { (claim, params) =>
             logger.info(s"begin get transaction history page")

@@ -2,10 +2,9 @@ package ru.tinkoff.fintech.stocks.dao
 
 import ru.tinkoff.fintech.stocks.db.models.User
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class UserDao {
+class UserDao(implicit val ec: ExecutionContext) {
 
   import quillContext._
 

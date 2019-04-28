@@ -17,12 +17,12 @@ import JwtHelper._
 import ru.tinkoff.fintech.stocks.dao.{StocksPackageDao, UserDao}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class UserService(stocksService: StocksService,
                   userDao: UserDao,
                   stocksPackageDao: StocksPackageDao)
-                 (implicit val logger: LoggingAdapter) {
+                 (implicit val ec: ExecutionContext,
+                  logger: LoggingAdapter) {
 
   private def newUser(login: String, password: String): User =
     User(None, login, User.dummyHash(password), User.dummySalt, balance = 1000) //1000 rub

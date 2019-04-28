@@ -10,9 +10,10 @@ import ru.tinkoff.fintech.stocks.http._
 import JwtHelper._
 import akka.event.LoggingAdapter
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
-class AccountRoutes(implicit val logger: LoggingAdapter) extends FailFastCirceSupport {
+class AccountRoutes(implicit val ec: ExecutionContext,
+                    logger: LoggingAdapter) extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._

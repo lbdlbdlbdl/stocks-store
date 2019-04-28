@@ -3,9 +3,9 @@ package ru.tinkoff.fintech.stocks.dao
 import ru.tinkoff.fintech.stocks.db.models.{StocksPackage, User}
 import ru.tinkoff.fintech.stocks.exception.Exceptions.ValidationException
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-class TransactionDao {
+import scala.concurrent.{ExecutionContext, Future}
+
+class TransactionDao(implicit val ec: ExecutionContext) {
 
   import quillContext._
 

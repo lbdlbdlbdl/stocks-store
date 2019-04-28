@@ -2,10 +2,9 @@ package ru.tinkoff.fintech.stocks.dao
 
 import ru.tinkoff.fintech.stocks.db.models.PriceHistory
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
-class PriceHistoryDao {
+class PriceHistoryDao(implicit val ec: ExecutionContext) {
 
   import quillContext._
 

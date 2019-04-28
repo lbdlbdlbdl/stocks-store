@@ -3,14 +3,13 @@ package ru.tinkoff.fintech.stocks.services
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import java.time.LocalDateTime
 
 import akka.event.LoggingAdapter
 import cats.data.OptionT
 import cats.instances.future._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import ru.tinkoff.fintech.stocks.dao._
 import ru.tinkoff.fintech.stocks.db.models._
 
@@ -21,7 +20,8 @@ class TransactionService(userDao: UserDao,
                          stocksPackageDao: StocksPackageDao,
                          transactionDao: TransactionDao,
                          transactionHistoryDao: TransactionHistoryDao)
-                        (implicit val logger: LoggingAdapter) {
+                        (implicit val ec: ExecutionContext,
+                         logger: LoggingAdapter) {
 
   //достаем инфу о пользователе о его пакете на акцию и информацию о самой акции
   def companion(login: String, stockId: Long, amount: Int): Future[Companion] = {

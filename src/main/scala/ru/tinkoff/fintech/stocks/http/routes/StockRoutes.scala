@@ -1,6 +1,5 @@
 package ru.tinkoff.fintech.stocks.http.routes
 
-import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server
@@ -11,13 +10,13 @@ import io.circe._
 import io.circe.parser._
 import ru.tinkoff.fintech.stocks.http._
 import ru.tinkoff.fintech.stocks.Env
-import ru.tinkoff.fintech.stocks.http.dtos.Requests
 import ru.tinkoff.fintech.stocks.http.dtos.Requests.RangeHistory
 import ru.tinkoff.fintech.stocks.services._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
-class StockRoutes(implicit val logger: LoggingAdapter) extends FailFastCirceSupport {
+class StockRoutes(implicit val ec: ExecutionContext,
+                  logger: LoggingAdapter) extends FailFastCirceSupport {
 
   val route = Reader[Env, server.Route] { env =>
     import io.circe.generic.auto._

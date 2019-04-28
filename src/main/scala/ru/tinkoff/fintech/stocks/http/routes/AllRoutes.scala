@@ -4,8 +4,11 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.server.Directives._
 import ru.tinkoff.fintech.stocks.Env
 
+import scala.concurrent.ExecutionContext
+
 class AllRoutes(env: Env)
-               (implicit logger: LoggingAdapter) {
+               (implicit val ec: ExecutionContext,
+                logger: LoggingAdapter) {
 
   val ur = new UserRoutes().route.run(env) //very simple monadic way
   val ar = new AccountRoutes().route.run(env)

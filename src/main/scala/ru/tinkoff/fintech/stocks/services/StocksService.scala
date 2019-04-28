@@ -8,14 +8,14 @@ import cats.instances.future._
 import ru.tinkoff.fintech.stocks.exception.Exceptions._
 import ru.tinkoff.fintech.stocks.http.dtos.Responses._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models._
 
 class StocksService(stockDao: StockDao,
                     priceHistoryDao: PriceHistoryDao)
-                   (implicit val logger: LoggingAdapter) {
+                   (implicit val ec: ExecutionContext,
+                    logger: LoggingAdapter) {
 
   def stockPackages2StockBatches(stocksPackages: List[StocksPackage]): Future[List[StockBatch]] =
     Future.sequence(stocksPackages.map(sp => newStockBatch(stockDao.getStock(sp.stockId), sp.count)))

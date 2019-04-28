@@ -7,16 +7,16 @@ import akka.event.LoggingAdapter
 import ru.tinkoff.fintech.stocks.dao.{PriceHistoryDao, StockDao}
 import ru.tinkoff.fintech.stocks.db.models.PriceHistory
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 //Со случайным интервалом сервер генерирует текущие цены для каждого элемента из списка акций.
 class PriceGenerationTask(stockDao: StockDao,
                           priceHistoryDao: PriceHistoryDao)
-                         (implicit val actorSystem: ActorSystem,
-                          val logger: LoggingAdapter) {
+                         (implicit val ec: ExecutionContext,
+                          actorSystem: ActorSystem,
+                          logger: LoggingAdapter) {
 
   //to config
   val random = new scala.util.Random
